@@ -14,3 +14,12 @@ def min_value(pixel):
 
 def max_value(pixel):
     return max(pixel)
+
+def red(pixel):
+    return pixel[0]
+
+def green(pixel):
+    return pixel[1]
+
+def blue(pixel):
+    return pixel[2]
