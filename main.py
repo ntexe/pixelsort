@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+import random
 
 from PIL import Image, ImageFilter
 
@@ -34,12 +35,21 @@ class PixelSort:
 
         start_time = time.monotonic()
 
+        print("opening picture...")
+
         with Image.open(self.input_file) as img:
             rimg = img.rotate(self.angle, expand=True)
             self.image_data = rimg.load()
+
+            print("sorting...")
+            print("progress: ")
             self.sort_image(rimg)
+            print()
+
             rimg = rimg.rotate(-self.angle, expand=True)
             rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2), (rimg.size[1]/2)-(img.size[1]/2), (rimg.size[0]/2)+(img.size[0]/2), (rimg.size[1]/2)+(img.size[1]/2)))
+
+            print("saving...")
 
             rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_i_{self.interval_type}_s_{self.skey_choice}_a{self.angle}.png")
 
@@ -74,6 +84,7 @@ class PixelSort:
             edge_image = img.filter(ImageFilter.FIND_EDGES).load()
 
         for y in range(img.size[1]):
+            print(f"\r{y}/{img.size[1]} rows", end="")
             if self.interval_type == "none":
                 sorted_row = sorted([self.image_data[x,y] for x in range(img.size[0])], key=self.skey)
 
@@ -90,6 +101,13 @@ class PixelSort:
                             sorted_row[interval_begin:interval_end] = sorted(sorted_row[interval_begin:interval_end], key=self.skey)
 
                         interval_begin = x+1
+
+            if self.interval_type == "melting":
+                sorted_row = list([self.image_data[x,y] for x in range(img.size[0])])
+                width = 100 + random.randint(0, 20)
+
+                for x in range(random.randint(0, 120), img.size[0], width):
+                    sorted_row[x:min(x+width, img.size[0])] = sorted(sorted_row[x:min(x+width, img.size[0])], key=self.skey)
 
             for x in range(img.size[0]):
                 self.image_data[x,y] = sorted_row[x]

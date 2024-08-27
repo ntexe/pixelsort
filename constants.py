@@ -1,7 +1,7 @@
 THRESHOLD_DEFAULT = 0.5
 
 INTERVAL_DEFAULT = "edge"
-INTERVAL_CHOICES = ["none", "edge"]
+INTERVAL_CHOICES = ["none", "edge", "melting"]
 
 SKEY_DEFAULT = "lightness"
 SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red", "green", "blue"]
