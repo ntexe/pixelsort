@@ -3,7 +3,6 @@ import os
 import time
 
 from PIL import Image, ImageFilter
-import numpy as np
 
 from constants import *
 import pixel_utils
@@ -26,6 +25,7 @@ class PixelSort:
         self.interval_type = INTERVAL_DEFAULT
         self.skey_choice = SKEY_DEFAULT
         self.skey = skeys[self.skey_choice]
+        self.angle = ANGLE_DEFAULT
 
         self.image_data = []
 
@@ -35,10 +35,13 @@ class PixelSort:
         start_time = time.monotonic()
 
         with Image.open(self.input_file) as img:
-            self.image_data = img.load()
-            self.sort_image(img)
+            rimg = img.rotate(self.angle, expand=True)
+            self.image_data = rimg.load()
+            self.sort_image(rimg)
+            rimg = rimg.rotate(-self.angle, expand=True)
+            rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2), (rimg.size[1]/2)-(img.size[1]/2), (rimg.size[0]/2)+(img.size[0]/2), (rimg.size[1]/2)+(img.size[1]/2)))
 
-            img.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_i_{self.interval_type}_s_{self.skey_choice}_.png")
+            rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_i_{self.interval_type}_s_{self.skey_choice}_a{self.angle}.png")
 
         print(f"finished in {time.monotonic()-start_time} seconds.")
 
@@ -55,12 +58,16 @@ class PixelSort:
         arg_parser.add_argument("-s", choices=SKEY_CHOICES,
                                 default=SKEY_DEFAULT, dest="skey_choice",
                                 help=HELP_SKEY, metavar="skey_choice")
+        arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
+                                help=HELP_ANGLE, metavar="angle",
+                                type=float)
         args = arg_parser.parse_args()
         self.input_file = args.input_file
         self.threshold = args.threshold
         self.interval_type = args.interval_type
         self.skey_choice = args.skey_choice
         self.skey = skeys[self.skey_choice]
+        self.angle = args.angle
 
     def sort_image(self, img):
         if self.interval_type == "edge":
@@ -73,12 +80,11 @@ class PixelSort:
             if self.interval_type == "edge":
                 interval_begin = 0
                 interval_end = 0
-                sorted_row = list([self.image_data[i, y] for i in range(img.size[0])])
+                sorted_row = list([self.image_data[x,y] for x in range(img.size[0])])
 
                 for x in range(img.size[0]):
                     if pixel_utils.lightness(edge_image[x, y]) > self.threshold:
-                        if x != 0:
-                            interval_end = x
+                        interval_end = x
 
                         if interval_end - interval_begin > 1:
                             sorted_row[interval_begin:interval_end] = sorted(sorted_row[interval_begin:interval_end], key=self.skey)
