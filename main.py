@@ -38,7 +38,7 @@ class PixelSort:
             self.image_data = img.load()
             self.sort_image(img)
 
-            img.save(f"{int(time.time())}_{os.path.basename(os.path.realpath(img.filename))}.png")
+            img.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_i_{self.interval_type}_s_{self.skey_choice}_.png")
 
         print(f"finished in {time.monotonic()-start_time} seconds.")
 
