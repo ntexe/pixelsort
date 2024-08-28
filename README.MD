@@ -4,12 +4,12 @@ TODO: replace colorsys functions because they make execution time longer (~20% l
 
 TODO: more customization for "melting" interval type
 
-TODO: replace min(x+width, img.size[0]) with x+width
-
-TODO: rename "interval type" to "segmentation algorithm" or smth like this
-
 TODO: new "segmentation algorithm" called "random"
 
 TODO: numba?
 
 TODO: both axis sort option
+
+TODO: "none" segmentation doesn't work properly with nonzero angle, fix
+
+TODO: replace for loops with while loops (perfomance may be better)
