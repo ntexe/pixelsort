@@ -52,7 +52,7 @@ class PixelSort:
 
             print("saving...")
 
-            rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_sg_{self.segmentation}_sk_{self.skey_choice}_a{self.angle}.png")
+            rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_sg_{self.segmentation}_sk_{self.skey_choice}_a{self.angle}_sz{self.size}.png")
 
         print(f"finished in {time.monotonic()-start_time} seconds.")
 
@@ -70,8 +70,12 @@ class PixelSort:
                                 default=SKEY_DEFAULT, dest="skey_choice",
                                 help=HELP_SKEY, metavar="skey_choice")
         arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
-                                help=HELP_ANGLE, metavar="angle",
-                                type=float)
+                                help=HELP_ANGLE, metavar="angle", type=float)
+        arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
+                                help=HELP_SIZE, metavar="size", type=float)
+        #arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
+        #                        dest="randomness", help=HELP_RANDOMNESS,
+        #                        metavar="randomness", type=float)
         args = arg_parser.parse_args()
         self.input_file = args.input_file
         self.threshold = args.threshold
@@ -79,6 +83,8 @@ class PixelSort:
         self.skey_choice = args.skey_choice
         self.skey = skeys[self.skey_choice]
         self.angle = args.angle
+        self.size = args.size
+        #self.randomness = args.randomness
 
     def sort_image(self):
         if self.segmentation == "edge":
@@ -102,8 +108,9 @@ class PixelSort:
 
             if self.segmentation == "melting":
                 sorted_row = list([self.image_data[x,y] for x in range(self.img.size[0])])
-                width = 100 + random.randint(0, 20)
-                offset = random.randint(0, 120)
+                width = int(self.size*self.img.size[0] * (1-(0.5*(random.random()+0.5))))
+
+                offset = random.randint(0, int(self.size*self.img.size[0]))
 
                 sorted_row[0:offset] = sorted(sorted_row[0:offset], key=self.skey)
 
