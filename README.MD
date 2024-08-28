@@ -6,10 +6,10 @@ TODO: more customization for "melting" interval type
 
 TODO: new "segmentation algorithm" called "random"
 
-TODO: numba?
-
 TODO: both axis sort option
 
 TODO: "none" segmentation doesn't work properly with nonzero angle, fix
 
 TODO: replace for loops with while loops (perfomance may be better)
+
+TODO: add multithreading

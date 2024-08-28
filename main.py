@@ -40,10 +40,11 @@ class PixelSort:
         with Image.open(self.input_file) as img:
             rimg = img.rotate(self.angle, expand=True)
             self.image_data = rimg.load()
+            self.img = rimg
 
             print("sorting...")
             print("progress: ")
-            self.sort_image(rimg)
+            self.sort_image()
             print()
 
             rimg = rimg.rotate(-self.angle, expand=True)
@@ -79,20 +80,20 @@ class PixelSort:
         self.skey = skeys[self.skey_choice]
         self.angle = args.angle
 
-    def sort_image(self, img):
+    def sort_image(self):
         if self.segmentation == "edge":
-            edge_image = img.filter(ImageFilter.FIND_EDGES).load()
+            edge_image = self.img.filter(ImageFilter.FIND_EDGES).load()
 
-        for y in range(img.size[1]):
-            print(f"\r{y}/{img.size[1]} rows", end="")
+        for y in range(self.img.size[1]):
+            print(f"\r{y}/{self.img.size[1]} rows", end="")
             if self.segmentation == "none":
-                sorted_row = sorted([self.image_data[x,y] for x in range(img.size[0])], key=self.skey)
+                sorted_row = sorted([self.image_data[x,y] for x in range(self.img.size[0])], key=self.skey)
 
             if self.segmentation == "edge":
                 segment_begin = 0
-                sorted_row = list([self.image_data[x,y] for x in range(img.size[0])])
+                sorted_row = list([self.image_data[x,y] for x in range(self.img.size[0])])
 
-                for x in range(img.size[0]):
+                for x in range(self.img.size[0]):
                     if pixel_utils.lightness(edge_image[x, y]) > self.threshold:
                         if x - segment_begin > 1:
                             sorted_row[segment_begin:x] = sorted(sorted_row[segment_begin:x], key=self.skey)
@@ -100,16 +101,16 @@ class PixelSort:
                         segment_begin = x+1
 
             if self.segmentation == "melting":
-                sorted_row = list([self.image_data[x,y] for x in range(img.size[0])])
+                sorted_row = list([self.image_data[x,y] for x in range(self.img.size[0])])
                 width = 100 + random.randint(0, 20)
                 offset = random.randint(0, 120)
 
                 sorted_row[0:offset] = sorted(sorted_row[0:offset], key=self.skey)
 
-                for x in range(offset, img.size[0], width):
+                for x in range(offset, self.img.size[0], width):
                     sorted_row[x:x+width] = sorted(sorted_row[x:x+width], key=self.skey)
 
-            for x in range(img.size[0]):
+            for x in range(self.img.size[0]):
                 self.image_data[x,y] = sorted_row[x]
 
 if __name__ == "__main__":
