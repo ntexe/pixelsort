@@ -52,7 +52,7 @@ class PixelSort:
 
             print("saving...")
 
-            rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_sg_{self.segmentation}_sk_{self.skey_choice}_a{self.angle}_sz{self.size}.png")
+            rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_sg_{self.segmentation}_sk_{self.skey_choice}_a{self.angle}{f'_sz{self.size}' if self.segmentation=='melting' else ''}.png")
 
         print(f"finished in {time.monotonic()-start_time} seconds.")
 
