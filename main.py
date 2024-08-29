@@ -28,6 +28,9 @@ class PixelSort:
         self.skey_choice = SKEY_DEFAULT
         self.skey = skeys[self.skey_choice]
         self.angle = ANGLE_DEFAULT
+        self.size = SIZE_DEFAULT
+        self.randomness = RANDOMNESS_DEFAULT
+        self.amount = AMOUNT_DEFAULT
 
         self.image_data = []
 
@@ -43,21 +46,25 @@ class PixelSort:
             rimg = rimg.convert("RGBA")
 
             rimg = rimg.rotate(self.angle, expand=True, fillcolor=(0,0,0,0))
-            self.image_data = rimg.load()
-            self.img = rimg
+            ogimg = rimg.copy()
+            for i in range(self.amount):
+                print(f"image {i+1}/{self.amount}")
+                rimg = ogimg.copy()                    
+                self.image_data = rimg.load()
+                self.img = rimg
 
-            print("sorting...")
-            print("progress: ")
-            self.sort_image()
-            print()
+                print("sorting...")
+                print("progress: ")
+                self.sort_image()
+                print()
 
-            rimg = rimg.rotate(-self.angle, expand=True)
-            rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2), (rimg.size[1]/2)-(img.size[1]/2), (rimg.size[0]/2)+(img.size[0]/2), (rimg.size[1]/2)+(img.size[1]/2)))
-            rimg = rimg.convert("RGB")
+                rimg = rimg.rotate(-self.angle, expand=True)
+                rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2), (rimg.size[1]/2)-(img.size[1]/2), (rimg.size[0]/2)+(img.size[0]/2), (rimg.size[1]/2)+(img.size[1]/2)))
+                rimg = rimg.convert("RGB")
 
-            print("saving...")
+                print("saving...")
 
-            rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_sg_{self.segmentation}_sk_{self.skey_choice}_a{self.angle}{f'_sz{self.size}' if self.segmentation=='melting' else ''}.png")
+                rimg.save(f"{os.path.basename(os.path.realpath(img.filename))}_t{self.threshold}_sg_{self.segmentation}_sk_{self.skey_choice}_a{self.angle}{f'_sz{self.size}' if self.segmentation in ('melting', 'blocky') else ''}{f'_r{self.randomness}' if self.segmentation=='blocky' else ''}_{i}.png")
 
         print(f"finished in {time.monotonic()-start_time} seconds.")
 
@@ -78,9 +85,11 @@ class PixelSort:
                                 help=HELP_ANGLE, metavar="angle", type=float)
         arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
                                 help=HELP_SIZE, metavar="size", type=float)
-        #arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
-        #                        dest="randomness", help=HELP_RANDOMNESS,
-        #                        metavar="randomness", type=float)
+        arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
+                                dest="randomness", help=HELP_RANDOMNESS,
+                                metavar="randomness", type=float)
+        arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
+                                help=HELP_AMOUNT, metavar="amount", type=int)
         args = arg_parser.parse_args()
         self.input_file = args.input_file
         self.threshold = args.threshold
@@ -89,7 +98,8 @@ class PixelSort:
         self.skey = skeys[self.skey_choice]
         self.angle = args.angle
         self.size = args.size
-        #self.randomness = args.randomness
+        self.randomness = args.randomness
+        self.amount = args.amount
 
     def sort_image(self):
         if self.segmentation == "edge":
@@ -139,6 +149,16 @@ class PixelSort:
                 for x in range(offset+start_x, end_x, width):
                     for i, item in enumerate(sorted([self.image_data[j,y] for j in range(x, min(x+width, end_x))], key=self.skey)):
                         self.image_data[x+i,y] = item
+
+            if self.segmentation == "blocky":
+                block_size = int(self.size*self.img.size[0])
+
+                last_x = 0
+                for x in range(start_x, end_x, block_size):
+                    i=0
+                    for i, item in enumerate(sorted([self.image_data[j,y] for j in range(last_x, min(x+int(block_size*(1-(self.randomness*(random.random()+0.5)))), end_x))], key=self.skey, reverse=(y//block_size)%2)):
+                        self.image_data[last_x+i,y] = item
+                    last_x = x+i
 
 if __name__ == "__main__":
     app = PixelSort()
