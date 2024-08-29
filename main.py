@@ -93,32 +93,30 @@ class PixelSort:
         for y in range(self.img.size[1]):
             print(f"\r{y}/{self.img.size[1]} rows", end="")
             if self.segmentation == "none":
-                sorted_row = sorted([self.image_data[x,y] for x in range(self.img.size[0])], key=self.skey)
+                for x, item in enumerate(sorted([self.image_data[x,y] for x in range(self.img.size[0])], key=self.skey)):
+                    self.image_data[x,y] = item
 
             if self.segmentation == "edge":
                 segment_begin = 0
-                sorted_row = list([self.image_data[x,y] for x in range(self.img.size[0])])
 
                 for x in range(self.img.size[0]):
                     if pixel_utils.lightness(edge_image[x, y]) > self.threshold:
                         if x - segment_begin > 1:
-                            sorted_row[segment_begin:x] = sorted(sorted_row[segment_begin:x], key=self.skey)
+                            for i, item in enumerate(sorted([self.image_data[x,y] for x in range(segment_begin, x)], key=self.skey)):
+                                self.image_data[segment_begin+i, y] = item
 
                         segment_begin = x+1
 
             if self.segmentation == "melting":
-                sorted_row = list([self.image_data[x,y] for x in range(self.img.size[0])])
                 width = int(self.size*self.img.size[0] * (1-(0.5*(random.random()+0.5))))
-
                 offset = random.randint(0, int(self.size*self.img.size[0]))
 
-                sorted_row[0:offset] = sorted(sorted_row[0:offset], key=self.skey)
+                for x, item in enumerate(sorted([self.image_data[x,y] for x in range(offset)], key=self.skey)):
+                    self.image_data[x,y] = item
 
                 for x in range(offset, self.img.size[0], width):
-                    sorted_row[x:x+width] = sorted(sorted_row[x:x+width], key=self.skey)
-
-            for x in range(self.img.size[0]):
-                self.image_data[x,y] = sorted_row[x]
+                    for i, item in enumerate(sorted([self.image_data[j,y] for j in range(x, min(x+width, self.img.size[0]))], key=self.skey)):
+                        self.image_data[x+i,y] = item
 
 if __name__ == "__main__":
     app = PixelSort()
