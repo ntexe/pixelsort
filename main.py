@@ -1,4 +1,5 @@
 import argparse
+import math
 import os
 import time
 import random
@@ -38,7 +39,10 @@ class PixelSort:
         print("opening picture...")
 
         with Image.open(self.input_file) as img:
-            rimg = img.rotate(self.angle, expand=True)
+            rimg = img.convert("RGB")
+            rimg = rimg.convert("RGBA")
+
+            rimg = rimg.rotate(self.angle, expand=True, fillcolor=(0,0,0,0))
             self.image_data = rimg.load()
             self.img = rimg
 
@@ -49,6 +53,7 @@ class PixelSort:
 
             rimg = rimg.rotate(-self.angle, expand=True)
             rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2), (rimg.size[1]/2)-(img.size[1]/2), (rimg.size[0]/2)+(img.size[0]/2), (rimg.size[1]/2)+(img.size[1]/2)))
+            rimg = rimg.convert("RGB")
 
             print("saving...")
 
@@ -91,15 +96,32 @@ class PixelSort:
             edge_image = self.img.filter(ImageFilter.FIND_EDGES).load()
 
         for y in range(self.img.size[1]):
+            # search for alpha pixels
+            start_x = 0
+            end_x = self.img.size[0]
+
+            non_alpha_found = False
+
+            for x in range(self.img.size[0]):
+                if non_alpha_found:
+                    if self.image_data[x,y][3] == 0:
+                        end_x = x
+                        break
+                    continue
+
+                if self.image_data[x,y][3] == 255:
+                    non_alpha_found = True
+                    start_x = x
+
             print(f"\r{y}/{self.img.size[1]} rows", end="")
             if self.segmentation == "none":
-                for x, item in enumerate(sorted([self.image_data[x,y] for x in range(self.img.size[0])], key=self.skey)):
-                    self.image_data[x,y] = item
+                for x, item in enumerate(sorted([self.image_data[x,y] for x in range(start_x, end_x)], key=self.skey)):
+                    self.image_data[start_x+x,y] = item
 
             if self.segmentation == "edge":
                 segment_begin = 0
 
-                for x in range(self.img.size[0]):
+                for x in range(start_x, end_x):
                     if pixel_utils.lightness(edge_image[x, y]) > self.threshold:
                         if x - segment_begin > 1:
                             for i, item in enumerate(sorted([self.image_data[x,y] for x in range(segment_begin, x)], key=self.skey)):
@@ -111,11 +133,11 @@ class PixelSort:
                 width = int(self.size*self.img.size[0] * (1-(0.5*(random.random()+0.5))))
                 offset = random.randint(0, int(self.size*self.img.size[0]))
 
-                for x, item in enumerate(sorted([self.image_data[x,y] for x in range(offset)], key=self.skey)):
+                for x, item in enumerate(sorted([self.image_data[x,y] for x in range(start_x+offset)], key=self.skey)):
                     self.image_data[x,y] = item
 
-                for x in range(offset, self.img.size[0], width):
-                    for i, item in enumerate(sorted([self.image_data[j,y] for j in range(x, min(x+width, self.img.size[0]))], key=self.skey)):
+                for x in range(offset+start_x, end_x, width):
+                    for i, item in enumerate(sorted([self.image_data[j,y] for j in range(x, min(x+width, end_x))], key=self.skey)):
                         self.image_data[x+i,y] = item
 
 if __name__ == "__main__":
