@@ -2,6 +2,7 @@ import argparse
 import math
 import os
 import time
+import threading
 import random
 
 from PIL import Image, ImageFilter
@@ -34,6 +35,9 @@ class PixelSort:
 
         self.image_data = []
         self.iimg_size = [0,0]
+        self.rimg_size = [0,0]
+
+        self.edge_image = None
 
     def main(self):
         self.parse_args()
@@ -50,8 +54,13 @@ class PixelSort:
                 start_time = time.monotonic()
                 print(f"image {i}/{self.amount}")
                 rimg = mimg.rotate(self.angle, expand=True, fillcolor=(0,)*4)
+
                 self.image_data = list(rimg.getdata())
-                self.img = rimg
+
+                if self.segmentation == "edge":
+                    self.edge_image = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
+
+                self.rimg_size = rimg.size
 
                 print("sorting...")
                 self.sort_image()
@@ -108,22 +117,18 @@ class PixelSort:
         self.amount = args.amount
 
     def sort_image(self):
-        if self.segmentation == "edge":
-            edge_image = self.img.filter(ImageFilter.FIND_EDGES).load()
-
-        for y in range(self.img.size[1]):
+        for y in range(self.rimg_size[1]):
             # search for alpha pixels
-
             start_x = 0
-            end_x = self.img.size[0]
+            end_x = self.rimg_size[0]
 
-            yoffset = y*self.img.size[0]
+            yoffset = y*self.rimg_size[0]
 
-            full_row = self.image_data[yoffset:yoffset+self.img.size[0]]
+            full_row = self.image_data[yoffset:yoffset+self.rimg_size[0]]
 
             non_alpha_found = False
 
-            for x in range(self.img.size[0]):
+            for x in range(self.rimg_size[0]):
                 if self.angle % 90 == 0:
                     break
 
@@ -145,8 +150,10 @@ class PixelSort:
             if self.segmentation == "edge":
                 segment_begin = 0
 
-                for x in range(start_x, end_x):
-                    if pixel_utils.lightness(edge_image[x, y]) > self.threshold:
+                edge_row = self.edge_image[yoffset+start_x:yoffset+end_x]
+
+                for x in range(len(row)):
+                    if pixel_utils.lightness(edge_row[x]) > self.threshold:
                         if x - segment_begin > 1:
                             row[segment_begin:x] = sorted(
                                         row[segment_begin:x], key=self.skey)
@@ -167,7 +174,7 @@ class PixelSort:
 
                 segment_size = int(block_size*(1-(self.randomness*(random.random()+0.5))))
 
-                for x in range(segment_size, self.img.size[0]+block_size, block_size):
+                for x in range(segment_size, self.rimg_size[0]+block_size, block_size):
                     full_row[x-segment_size:x] = sorted(
                                                     full_row[x-segment_size:x],
                                                     key=self.skey,
@@ -178,7 +185,7 @@ class PixelSort:
             if self.segmentation in ("none", "edge", "melting"):
                 self.image_data[yoffset+start_x:yoffset+end_x] = row
             else:
-                self.image_data[yoffset:yoffset+self.img.size[0]] = full_row
+                self.image_data[yoffset:yoffset+self.rimg_size[0]] = full_row
 
 if __name__ == "__main__":
     app = PixelSort()
