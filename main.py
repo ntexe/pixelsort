@@ -2,7 +2,6 @@ import argparse
 import math
 import os
 import time
-import threading
 import random
 
 from PIL import Image, ImageFilter
@@ -50,8 +49,9 @@ class PixelSort:
 
             self.iimg_size = img.size
 
+            start_time = time.monotonic()
+
             for i in range(1, self.amount+1):
-                start_time = time.monotonic()
                 print(f"image {i}/{self.amount}")
                 rimg = mimg.rotate(self.angle, expand=True, fillcolor=(0,)*4)
 
@@ -74,14 +74,14 @@ class PixelSort:
                                   (rimg.size[1]/2)+(img.size[1]/2)))
                 rimg = rimg.convert("RGB")
 
-                print(f"finished image {i} in {time.monotonic()-start_time} seconds.")
-
                 print("saving...")
                 rimg.save(FILENAME_TEMPLATE.format(
                         fn=os.path.basename(os.path.realpath(img.filename)),
                         t=self.threshold, sg=self.segmentation,
                         sk=self.skey_choice, a=self.angle, sz=self.size,
                         r=self.randomness, i=i))
+
+            print(f"finished in {time.monotonic()-start_time} seconds.")
 
     def parse_args(self):
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
