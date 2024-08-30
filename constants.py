@@ -1,4 +1,4 @@
-THRESHOLD_DEFAULT = 0.5
+THRESHOLD_DEFAULT = 0.1
 
 SEGMENTATION_DEFAULT = "edge"
 SEGMENTATION_CHOICES = ["none", "edge", "melting", "blocky"]
@@ -20,3 +20,5 @@ HELP_ANGLE = f"Angle to rotate the image before sorting in degrees. Default is {
 HELP_SIZE = f"Size of \"melting\" or \"blocky\" segmentation. Value should be between 0 and 1. Default is {SIZE_DEFAULT}"
 HELP_RANDOMNESS = f"Randomness of \"blocky\" segmentation. Value should be between 0 and 0.5. Default is {RANDOMNESS_DEFAULT}"
 HELP_AMOUNT = f"Amount of images. Value should be an integer. Default is {AMOUNT_DEFAULT}"
+
+FILENAME_TEMPLATE = "{fn}_t{t}_sg_{sg}_sk_{sk}_a{a}_sz{sz}_r{r}_{i:04}.png"
