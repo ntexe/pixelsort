@@ -45,7 +45,6 @@ class PixelSort:
 
         with Image.open(self.input_file) as img:
             mimg = img.convert("RGB")
-            mimg = mimg.convert("RGBA")
 
             self.iimg_size = img.size
 
@@ -53,7 +52,7 @@ class PixelSort:
 
             for i in range(1, self.amount+1):
                 print(f"image {i}/{self.amount}")
-                rimg = mimg.rotate(self.angle, expand=True, fillcolor=(0,)*4)
+                rimg = mimg.rotate(self.angle, expand=True)
 
                 self.image_data = list(rimg.getdata())
 
@@ -67,12 +66,11 @@ class PixelSort:
 
                 rimg.putdata(self.image_data)
 
-                rimg = rimg.rotate(-self.angle, expand=True)
+                rimg = rimg.rotate(-self.angle)
                 rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2),
                                   (rimg.size[1]/2)-(img.size[1]/2),
                                   (rimg.size[0]/2)+(img.size[0]/2),
                                   (rimg.size[1]/2)+(img.size[1]/2)))
-                rimg = rimg.convert("RGB")
 
                 print("saving...")
                 rimg.save(FILENAME_TEMPLATE.format(
@@ -81,7 +79,7 @@ class PixelSort:
                         sk=self.skey_choice, a=self.angle, sz=self.size,
                         r=self.randomness, i=i))
 
-            print(f"finished in {time.monotonic()-start_time} seconds.")
+            print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
 
     def parse_args(self):
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
@@ -117,6 +115,38 @@ class PixelSort:
         self.amount = args.amount
 
     def sort_image(self):
+        x1, y1 = 0, 0
+        if self.angle > -180 and self.angle < -90:
+            sin_alpha = math.sin(math.radians(self.angle+180))
+            sin_beta = math.sin(math.radians(90-(self.angle+180)))
+
+            x1 = int(self.iimg_size[0]*sin_beta)
+            y1 = int(self.iimg_size[0]*sin_alpha)
+
+        if self.angle > -90 and self.angle < 0:
+            sin_alpha = math.sin(math.radians(self.angle+90))
+            sin_beta = math.sin(math.radians(90-(self.angle+90)))
+
+            x1 = int(self.iimg_size[1]*sin_beta)
+            y1 = int(self.iimg_size[1]*sin_alpha)
+
+        if self.angle > 0 and self.angle < 90:
+            sin_alpha = math.sin(math.radians(self.angle))
+            sin_beta = math.sin(math.radians(90-self.angle))
+
+            x1 = int(self.iimg_size[0]*sin_beta)
+            y1 = int(self.iimg_size[0]*sin_alpha)
+
+        if self.angle > 90 and self.angle < 180:
+            sin_alpha = math.sin(math.radians(self.angle-90))
+            sin_beta = math.sin(math.radians(90-(self.angle-90)))
+
+            x1 = int(self.iimg_size[1]*sin_beta)
+            y1 = int(self.iimg_size[1]*sin_alpha)
+
+        x2 = self.rimg_size[0]-x1
+        y2 = self.rimg_size[1]-y1
+
         for y in range(self.rimg_size[1]):
             # search for alpha pixels
             start_x = 0
@@ -126,21 +156,9 @@ class PixelSort:
 
             full_row = self.image_data[yoffset:yoffset+self.rimg_size[0]]
 
-            non_alpha_found = False
-
-            for x in range(self.rimg_size[0]):
-                if self.angle % 90 == 0:
-                    break
-
-                if non_alpha_found:
-                    if full_row[x][3] == 0:
-                        end_x = x
-                        break
-                    continue
-
-                if full_row[x][3] == 255:
-                    non_alpha_found = True
-                    start_x = x
+            if self.angle % 90 != 0:
+                start_x = max(x1-int((y/sin_alpha)*sin_beta), x2-int(((self.rimg_size[1]-y)/sin_beta)*sin_alpha))
+                end_x = min(x1+int((y/sin_beta)*sin_alpha), x2+int(((self.rimg_size[1]-y)/sin_alpha)*sin_beta))
 
             row = full_row[start_x:end_x]
 
