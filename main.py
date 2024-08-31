@@ -66,11 +66,11 @@ class PixelSort:
 
                 rimg.putdata(self.image_data)
 
-                rimg = rimg.rotate(-self.angle)
-                rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2),
-                                  (rimg.size[1]/2)-(img.size[1]/2),
-                                  (rimg.size[0]/2)+(img.size[0]/2),
-                                  (rimg.size[1]/2)+(img.size[1]/2)))
+                rimg = rimg.rotate(-self.angle, expand=True)
+                #rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2),
+                #                  (rimg.size[1]/2)-(img.size[1]/2),
+                #                  (rimg.size[0]/2)+(img.size[0]/2),
+                #                  (rimg.size[1]/2)+(img.size[1]/2)))
 
                 print("saving...")
                 rimg.save(FILENAME_TEMPLATE.format(
@@ -116,34 +116,12 @@ class PixelSort:
 
     def sort_image(self):
         x1, y1 = 0, 0
-        if self.angle > -180 and self.angle < -90:
-            sin_alpha = math.sin(math.radians(self.angle+180))
-            sin_beta = math.sin(math.radians(90-(self.angle+180)))
 
-            x1 = int(self.iimg_size[0]*sin_beta)
-            y1 = int(self.iimg_size[0]*sin_alpha)
+        sin_alpha = math.sin(math.radians(self.angle%90))
+        sin_beta = math.sin(math.radians(90-(self.angle%90)))
 
-        if self.angle > -90 and self.angle < 0:
-            sin_alpha = math.sin(math.radians(self.angle+90))
-            sin_beta = math.sin(math.radians(90-(self.angle+90)))
-
-            x1 = int(self.iimg_size[1]*sin_beta)
-            y1 = int(self.iimg_size[1]*sin_alpha)
-
-        if self.angle > 0 and self.angle < 90:
-            sin_alpha = math.sin(math.radians(self.angle))
-            sin_beta = math.sin(math.radians(90-self.angle))
-
-            x1 = int(self.iimg_size[0]*sin_beta)
-            y1 = int(self.iimg_size[0]*sin_alpha)
-
-        if self.angle > 90 and self.angle < 180:
-            sin_alpha = math.sin(math.radians(self.angle-90))
-            sin_beta = math.sin(math.radians(90-(self.angle-90)))
-
-            x1 = int(self.iimg_size[1]*sin_beta)
-            y1 = int(self.iimg_size[1]*sin_alpha)
-
+        x1 = int(self.iimg_size[(self.angle//90)%2]*sin_beta)
+        y1 = int(self.iimg_size[(self.angle//90)%2]*sin_alpha)
         x2 = self.rimg_size[0]-x1
         y2 = self.rimg_size[1]-y1
 
