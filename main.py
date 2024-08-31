@@ -67,10 +67,10 @@ class PixelSort:
                 rimg.putdata(self.image_data)
 
                 rimg = rimg.rotate(-self.angle, expand=True)
-                #rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2),
-                #                  (rimg.size[1]/2)-(img.size[1]/2),
-                #                  (rimg.size[0]/2)+(img.size[0]/2),
-                #                  (rimg.size[1]/2)+(img.size[1]/2)))
+                rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2),
+                                  (rimg.size[1]/2)-(img.size[1]/2),
+                                  (rimg.size[0]/2)+(img.size[0]/2),
+                                  (rimg.size[1]/2)+(img.size[1]/2)))
 
                 print("saving...")
                 rimg.save(FILENAME_TEMPLATE.format(
