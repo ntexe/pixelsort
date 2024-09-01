@@ -23,13 +23,27 @@ skeys = {
 class PixelSort:
     def __init__(self):
         self.input_file = None
+
+        self.threshold_start = THRESHOLD_DEFAULT
+        self.threshold_end = THRESHOLD_DEFAULT
         self.threshold = THRESHOLD_DEFAULT
+
         self.segmentation = SEGMENTATION_DEFAULT
         self.skey_choice = SKEY_DEFAULT
         self.skey = skeys[self.skey_choice]
+
+        self.angle_start = ANGLE_DEFAULT
+        self.angle_end = ANGLE_DEFAULT
         self.angle = ANGLE_DEFAULT
+
+        self.size_start = SIZE_DEFAULT
+        self.size_end = SIZE_DEFAULT
         self.size = SIZE_DEFAULT
+
+        self.randomness_start = RANDOMNESS_DEFAULT
+        self.randomness_end = RANDOMNESS_DEFAULT
         self.randomness = RANDOMNESS_DEFAULT
+
         self.amount = AMOUNT_DEFAULT
 
         self.image_data = []
@@ -51,6 +65,11 @@ class PixelSort:
             start_time = time.monotonic()
 
             for i in range(1, self.amount+1):
+                self.threshold = (self.threshold_start*(max(1, self.amount-1)-(i-1)) + self.threshold_end*(i-1))/max(1, self.amount-1)
+                self.angle = int((self.angle_start*(max(1, self.amount-1)-(i-1)) + self.angle_end*(i-1))/max(1, self.amount-1))
+                self.size = (self.size_start*(max(1, self.amount-1)-(i-1)) + self.size_end*(i-1))/max(1, self.amount-1)
+                self.randomness = (self.randomness_start*(max(1, self.amount-1)-(i-1)) + self.randomness_end*(i-1))/max(1, self.amount-1)
+
                 print(f"image {i}/{self.amount}")
                 rimg = mimg.rotate(self.angle, expand=True)
 
@@ -73,20 +92,22 @@ class PixelSort:
                                   (rimg.size[1]/2)+(img.size[1]/2)))
 
                 print("saving...")
-                rimg.save(FILENAME_TEMPLATE.format(
+                rimg.save(self.output.format(
                         fn=os.path.basename(os.path.realpath(img.filename)),
                         t=self.threshold, sg=self.segmentation,
                         sk=self.skey_choice, a=self.angle, sz=self.size,
-                        r=self.randomness, i=i))
+                        r=self.randomness, i=i), quality=95)
 
             print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
 
     def parse_args(self):
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
         arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
-        arg_parser.add_argument("-t", default=THRESHOLD_DEFAULT,
+        arg_parser.add_argument("-o", default=OUTPUT_DEFAULT, dest="output",
+                                help=HELP_OUTPUT, metavar="output")
+        arg_parser.add_argument("-t", default=str(THRESHOLD_DEFAULT),
                                 dest="threshold", help=HELP_THRESHOLD,
-                                metavar="threshold", type=float)
+                                metavar="threshold")
         arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
                                 default=SEGMENTATION_DEFAULT,
                                 dest="segmentation", help=HELP_SEGMENTATION,
@@ -94,15 +115,16 @@ class PixelSort:
         arg_parser.add_argument("-sk", choices=SKEY_CHOICES,
                                 default=SKEY_DEFAULT, dest="skey_choice",
                                 help=HELP_SKEY, metavar="skey_choice")
-        arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
-                                help=HELP_ANGLE, metavar="angle", type=int)
-        arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
-                                help=HELP_SIZE, metavar="size", type=float)
-        arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
+        arg_parser.add_argument("-a", default=str(ANGLE_DEFAULT), dest="angle",
+                                help=HELP_ANGLE, metavar="angle")
+        arg_parser.add_argument("-sz", default=str(SIZE_DEFAULT), dest="size",
+                                help=HELP_SIZE, metavar="size")
+        arg_parser.add_argument("-r", default=str(RANDOMNESS_DEFAULT),
                                 dest="randomness", help=HELP_RANDOMNESS,
-                                metavar="randomness", type=float)
+                                metavar="randomness")
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
+
         args = arg_parser.parse_args()
         self.input_file = args.input_file
         self.threshold = args.threshold
@@ -113,6 +135,38 @@ class PixelSort:
         self.size = args.size
         self.randomness = args.randomness
         self.amount = args.amount
+        self.output = args.output
+
+        if len(self.threshold.split(",")) > 2:
+            raise RuntimeError("Too many values in threshold argument.")
+        self.threshold_start = float(self.threshold.split(",")[0])
+        self.threshold_end = float(self.threshold.split(",")[-1])
+        if (not 0 <= self.threshold_start <= 1) or (not 0 <= self.threshold_end <= 1):
+            raise RuntimeError("Threshold value is invalid.")
+
+        if len(self.angle.split(",")) > 2:
+            raise RuntimeError("Too many values in angle argument.")
+        self.angle_start = int(self.angle.split(",")[0])
+        self.angle_end = int(self.angle.split(",")[-1])
+        if (not -180 <= self.angle_start <= 180) or (not -180 <= self.angle_end <= 180):
+            raise RuntimeError("Angle value is invalid.")
+
+        if len(self.size.split(",")) > 2:
+            raise RuntimeError("Too many values in size argument.")
+        self.size_start = float(self.size.split(",")[0])
+        self.size_end = float(self.size.split(",")[-1])
+        if (not 0 <= self.size_start <= 1) or (not 0 <= self.size_end <= 1):
+            raise RuntimeError("Size value is invalid.")
+
+        if len(self.randomness.split(",")) > 2:
+            raise RuntimeError("Too many values in randomness argument.")
+        self.randomness_start = float(self.randomness.split(",")[0])
+        self.randomness_end = float(self.randomness.split(",")[-1])
+        if (not 0 <= self.randomness_start <= 1) or (not 0 <= self.randomness_end <= 1):
+            raise RuntimeError("Randomness value is invalid.")
+
+        if self.amount < 1:
+            raise RuntimeError("Amount value is invalid")
 
     def sort_image(self):
         x1, y1 = 0, 0
