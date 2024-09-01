@@ -148,7 +148,7 @@ class PixelSort:
             raise RuntimeError("Too many values in angle argument.")
         self.angle_start = int(self.angle.split(",")[0])
         self.angle_end = int(self.angle.split(",")[-1])
-        if (not -180 <= self.angle_start <= 180) or (not -180 <= self.angle_end <= 180):
+        if (not 0 <= self.angle_start <= 360) or (not 0 <= self.angle_end <= 360):
             raise RuntimeError("Angle value is invalid.")
 
         if len(self.size.split(",")) > 2:
