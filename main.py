@@ -35,11 +35,8 @@ class PixelSort:
 
         self.amount = AMOUNT_DEFAULT
 
-        self.image_data = []
-        self.iimg_size = [0,0]
-        self.rimg_size = [0,0]
-
-        self.edge_image = None
+        self.img_size = [0,0]
+        self.img_filename = ""
 
     def main(self):
         self.parse_args()
@@ -47,45 +44,15 @@ class PixelSort:
         print("opening picture...")
 
         with Image.open(self.input_file) as img:
-            mimg = img.convert("RGB")
+            self.img_size = img.size
+            self.img_filename=os.path.basename(os.path.realpath(img.filename))
 
-            self.iimg_size = img.size
+            mimg = img.convert("RGB")
 
             start_time = time.monotonic()
 
             for i in range(1, self.amount+1):
-                self.threshold = self.get_balance(self.t_start, self.t_end, i, self.amount)
-                self.angle = int(self.get_balance(self.a_start, self.a_end, i, self.amount))
-                self.size = self.get_balance(self.sz_start, self.sz_end, i, self.amount)
-                self.randomness = self.get_balance(self.r_start, self.r_end, i, self.amount)
-
-                print(f"image {i}/{self.amount}")
-                rimg = mimg.rotate(self.angle, expand=True)
-
-                self.image_data = list(rimg.getdata())
-
-                if self.segmentation == "edge":
-                    self.edge_image = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
-
-                self.rimg_size = rimg.size
-
-                print("sorting...")
-                self.sort_image()
-
-                rimg.putdata(self.image_data)
-
-                rimg = rimg.rotate(-self.angle, expand=True)
-                rimg = rimg.crop(((rimg.size[0]/2)-(img.size[0]/2),
-                                  (rimg.size[1]/2)-(img.size[1]/2),
-                                  (rimg.size[0]/2)+(img.size[0]/2),
-                                  (rimg.size[1]/2)+(img.size[1]/2)))
-
-                print("saving...")
-                rimg.save(self.output.format(
-                        fn=os.path.basename(os.path.realpath(img.filename)),
-                        sg=self.segmentation, sk=self.skey_choice,
-                        t=self.threshold, a=self.angle, sz=self.size,
-                        r=self.randomness, i=i), quality=95)
+                self.process_image(mimg, i)
 
             print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
 
@@ -153,74 +120,110 @@ class PixelSort:
     def get_balance(self, minv, maxv, i, max_i):
         return (minv*(max(1, max_i-1)-(i-1)) + maxv*(i-1))/max(1, max_i-1)
 
-    def sort_image(self):
+    def process_image(self, mimg, i):
+        threshold = self.get_balance(self.t_start, self.t_end, i, self.amount)
+        angle = int(self.get_balance(self.a_start, self.a_end, i, self.amount))
+        size = self.get_balance(self.sz_start, self.sz_end, i, self.amount)
+        randomness = self.get_balance(self.r_start, self.r_end, i, self.amount)
+
+        print(f"image {i}/{self.amount}")
+        rimg = mimg.rotate(angle, expand=True)
+
+        if self.segmentation == "edge":
+            edge_image = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
+        else:
+            edge_image = [[0,0,0]]*rimg.size[0]*rimg.size[1]
+
+        print("sorting...")
+        rimg.putdata(
+            self.sort_image(list(rimg.getdata()), self.segmentation,
+                self.skey, threshold, angle, size, randomness,
+                rimg.size, edge_image)
+            )
+
+        rimg = rimg.rotate(-angle, expand=True)
+        rimg = rimg.crop(((rimg.size[0]/2)-(self.img_size[0]/2),
+                          (rimg.size[1]/2)-(self.img_size[1]/2),
+                          (rimg.size[0]/2)+(self.img_size[0]/2),
+                          (rimg.size[1]/2)+(self.img_size[1]/2)))
+
+        print("saving...")
+        rimg.save(self.output.format(fn=self.img_filename,
+                sg=self.segmentation, sk=self.skey_choice, t=threshold,
+                a=angle, sz=size, r=randomness, i=i), quality=95)
+
+    def sort_image(self, image_data, segmentation, skey,
+                   threshold, angle, size, randomness, rimg_size, 
+                   edge_image_data=None):
         x1, y1 = 0, 0
 
-        sin_alpha = math.sin(math.radians(self.angle%90))
-        sin_beta = math.sin(math.radians(90-(self.angle%90)))
+        sin_alpha = math.sin(math.radians(angle%90))
+        sin_beta = math.sin(math.radians(90-(angle%90)))
 
-        x1 = int(self.iimg_size[(self.angle//90)%2]*sin_beta)
-        y1 = int(self.iimg_size[(self.angle//90)%2]*sin_alpha)
-        x2 = self.rimg_size[0]-x1
-        y2 = self.rimg_size[1]-y1
+        x1 = int(self.img_size[(angle//90)%2]*sin_beta)
+        y1 = int(self.img_size[(angle//90)%2]*sin_alpha)
+        x2 = rimg_size[0]-x1
+        y2 = rimg_size[1]-y1
 
-        for y in range(self.rimg_size[1]):
+        for y in range(rimg_size[1]):
             # search for alpha pixels
             start_x = 0
-            end_x = self.rimg_size[0]
+            end_x = rimg_size[0]
 
-            yoffset = y*self.rimg_size[0]
+            yoffset = y*rimg_size[0]
 
-            full_row = self.image_data[yoffset:yoffset+self.rimg_size[0]]
+            full_row = image_data[yoffset:yoffset+rimg_size[0]]
 
-            if self.angle % 90 != 0:
-                start_x = max(x1-int((y/sin_alpha)*sin_beta), x2-int(((self.rimg_size[1]-y)/sin_beta)*sin_alpha))
-                end_x = min(x1+int((y/sin_beta)*sin_alpha), x2+int(((self.rimg_size[1]-y)/sin_alpha)*sin_beta))
+            if angle % 90 != 0:
+                start_x = max(x1-int((y/sin_alpha)*sin_beta), x2-int(((rimg_size[1]-y)/sin_beta)*sin_alpha))
+                end_x = min(x1+int((y/sin_beta)*sin_alpha), x2+int(((rimg_size[1]-y)/sin_alpha)*sin_beta))
 
             row = full_row[start_x:end_x]
 
-            if self.segmentation == "none":
-                row.sort(key=self.skey)
+            if segmentation == "none":
+                row.sort(key=skey)
 
-            if self.segmentation == "edge":
+            if segmentation == "edge":
                 segment_begin = 0
 
-                edge_row = self.edge_image[yoffset+start_x:yoffset+end_x]
+                edge_row = edge_image_data[yoffset+start_x:yoffset+end_x]
 
                 for x in range(len(row)):
-                    if pixel_utils.lightness(edge_row[x]) > self.threshold:
+                    if pixel_utils.lightness(edge_row[x]) > threshold:
                         if x - segment_begin > 1:
                             row[segment_begin:x] = sorted(
-                                        row[segment_begin:x], key=self.skey)
+                                        row[segment_begin:x], key=skey)
 
                         segment_begin = x+1
 
-            if self.segmentation == "melting":
-                width = int(self.size*self.iimg_size[0]*(1-(0.5*(random.random()+0.5))))
-                offset = random.randint(0, int(self.size*self.iimg_size[0]))
+            if segmentation == "melting":
+                width = int(size*self.img_size[0]*(1-(0.5*(random.random()+0.5))))
+                offset = random.randint(0, int(size*self.img_size[0]))
 
-                row[:offset] = sorted(row[:offset], key=self.skey)
+                row[:offset] = sorted(row[:offset], key=skey)
 
                 for x in range(offset, len(row), width):
-                    row[x:x+width] = sorted(row[x:x+width], key=self.skey)
+                    row[x:x+width] = sorted(row[x:x+width], key=skey)
 
-            if self.segmentation == "blocky":
-                block_size = int(self.size*self.iimg_size[0])
+            if segmentation == "blocky":
+                block_size = int(size*self.img_size[0])
 
-                segment_size = int(block_size*(1-(self.randomness*(random.random()+0.5))))
+                segment_size = int(block_size*(1-(randomness*(random.random()+0.5))))
 
-                for x in range(segment_size, self.rimg_size[0]+block_size, block_size):
+                for x in range(segment_size, rimg_size[0]+block_size, block_size):
                     full_row[x-segment_size:x] = sorted(
                                                     full_row[x-segment_size:x],
-                                                    key=self.skey,
+                                                    key=skey,
                                                     reverse=(y//block_size)%2)
 
-                    segment_size = int(block_size*(1-(self.randomness*(random.random()+0.5))))
+                    segment_size = int(block_size*(1-(randomness*(random.random()+0.5))))
 
-            if self.segmentation in ("none", "edge", "melting"):
-                self.image_data[yoffset+start_x:yoffset+end_x] = row
+            if segmentation in ("none", "edge", "melting"):
+                image_data[yoffset+start_x:yoffset+end_x] = row
             else:
-                self.image_data[yoffset:yoffset+self.rimg_size[0]] = full_row
+                image_data[yoffset:yoffset+rimg_size[0]] = full_row
+
+        return image_data
 
 if __name__ == "__main__":
     app = PixelSort()
