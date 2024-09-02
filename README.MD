@@ -34,13 +34,15 @@ options:
 
 ### Segmentation
 #### None
-The tool doesn't use row segmentation.
+Row segmentation isn't used.
 #### Edge
 The tool detects edges and determines segments based on this data
 #### Melting
-The tool uses random values to determine segments. Use -sz argument to adjust size of the segments.
+Random values are used to determine segments. Use -sz argument to adjust size of the segments.
 #### Blocky
 This segmentation looks like "melting" segmentation but blocky.
+
+<br>
 
 ### Sorting key
 #### Hue, saturation and lightness
@@ -49,3 +51,15 @@ Color is converted to HSL and pixels in segments are sorted by hue, saturation o
 Pixels in segments are sorted by minimum or maximum value of red, green or blue color.
 #### Red, green and blue
 Pixels in segments are sorted by value of red, green or blue color.
+
+<br>
+
+### Animation
+You can pass range of values to threshold, angle, size and randomness. If amount is greater than 1, value of parameters will range from first to second value.
+Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with angle parameter 0, 22 and 45.
+
+### Examples
+
+<br>
+
+Tested on Windows 10 22H2 Python 3.11.9 (x64)
