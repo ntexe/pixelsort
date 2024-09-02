@@ -59,29 +59,35 @@ Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with 
 
 ### Examples
 Original
-![Original](/examples/img.jpg)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg" width=50%>
 
 `python main.py img.jpg`
-![Edge](/examples/img.jpg_sg_edge_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_edge_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -a 45`
-![Edge45](/examples/img.jpg_sg_edge_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_edge_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg none`
-![None](/examples/img.jpg_sg_none_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_none_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg melting`
-![Melting](/examples/img.jpg_sg_melting_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_melting_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg melting -a 45`
-![Melting45](/examples/img.jpg_sg_melting_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_melting_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg blocky`
-![Melting45](/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg blocky -a 45`
-![Melting45](/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png)
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
 
 <br>
 
 Tested on Windows 10 22H2 Python 3.11.9 (x64)
+
+TODO:
+
+- add multithreading
+- add masking
+- make filenames shorter
