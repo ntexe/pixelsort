@@ -1,5 +1,51 @@
-README soon...
+PixelSort is a Python tool for sorting pixels in images.
 
-TODO: add multithreading
+## Requirements
+Python 3.9+
+Pillow
 
-TODO: masking
+## Instalation
+```bash
+git clone https://github.com/ntexe/pixelsort
+pip install Pillow
+```
+
+## Usage
+```
+usage: main.py [-h] [-o output] [-sg segmentation] [-sk skey_choice] [-t threshold] [-a angle] [-sz size] [-r randomness] [-am amount] [--sp] input_file
+
+PixelSort is a python tool for sorting pixels in pictures.
+
+positional arguments:
+  input_file        Input image file.
+
+options:
+  -h, --help        show this help message and exit
+  -o output         Output image file.
+  -sg segmentation  Segmentation. Available choices: none, edge, melting, blocky. Default is edge.
+  -sk skey_choice   Sorting key. Available choices: hue, lightness, saturation, min_value, max_value, red, green, blue. Default is lightness.
+  -t threshold      Threshold for edge detection. Value should be between 0 and 1. Default is 0.1.
+  -a angle          Angle to rotate the image before sorting in degrees. Value should be between 0 and 360. Default is 0
+  -sz size          Size of "melting" or "blocky" segmentation. Value should be between 0 and 1. Default is 0.05
+  -r randomness     Randomness of "blocky" segmentation. Value should be between 0 and 0.5. Default is 0.1
+  -am amount        Amount of images. Value should be an integer. Default is 1
+  --sp              Second pass flag.
+```
+
+### Segmentation
+#### None
+The tool doesn't use row segmentation.
+#### Edge
+The tool detects edges and determines segments based on this data
+#### Melting
+The tool uses random values to determine segments. Use -sz argument to adjust size of the segments.
+#### Blocky
+This segmentation looks like "melting" segmentation but blocky.
+
+### Sorting key
+#### Hue, saturation and lightness
+Color is converted to HSL and pixels in segments are sorted by hue, saturation or lightness.
+#### min_value and max_value
+Pixels in segments are sorted by minimum or maximum value of red, green or blue color.
+#### Red, green and blue
+Pixels in segments are sorted by value of red, green or blue color.
