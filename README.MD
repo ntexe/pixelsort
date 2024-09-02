@@ -62,25 +62,25 @@ Original
 ![Original](/examples/img.jpg)
 
 `python main.py img.jpg`
-![Edge](/examples/img.jpg_sg_edge_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+![Edge](/examples/img.jpg_sg_edge_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png | width=200)
 
 `python main.py img.jpg -a 45`
-![Edge45](/examples/img.jpg_sg_edge_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png)
+![Edge45](/examples/img.jpg_sg_edge_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png | width=200)
 
 `python main.py img.jpg -sg none`
-![None](/examples/img.jpg_sg_none_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+![None](/examples/img.jpg_sg_none_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png | width=200)
 
 `python main.py img.jpg -sg melting`
-![Melting](/examples/img.jpg_sg_melting_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+![Melting](/examples/img.jpg_sg_melting_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png | width=200)
 
 `python main.py img.jpg -sg melting -a 45`
-![Melting45](/examples/img.jpg_sg_melting_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png)
+![Melting45](/examples/img.jpg_sg_melting_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png | width=200)
 
 `python main.py img.jpg -sg blocky`
-![Melting45](/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png)
+![Melting45](/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png | width=200)
 
 `python main.py img.jpg -sg blocky -a 45`
-![Melting45](/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png)
+![Melting45](/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png | width=200)
 
 <br>
 
