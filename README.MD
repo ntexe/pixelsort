@@ -59,27 +59,35 @@ Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with 
 
 ### Examples
 Original
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg" width=50%>
 
 `python main.py img.jpg`
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_edge_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -a 45`
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_edge_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg none`
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_none_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg melting`
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_melting_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg melting -a 45`
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_melting_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg blocky`
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
 
 `python main.py img.jpg -sg blocky -a 45`
+
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
 
 <br>
