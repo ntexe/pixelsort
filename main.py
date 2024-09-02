@@ -80,6 +80,8 @@ class PixelSort:
                                 metavar="randomness")
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
+        arg_parser.add_argument("--sp", action="store_true",
+                                dest="second_pass", help=HELP_SECOND_PASS)
 
         args = arg_parser.parse_args()
         self.input_file = args.input_file
@@ -92,6 +94,7 @@ class PixelSort:
         self.randomness = args.randomness
         self.amount = args.amount
         self.output = args.output
+        self.second_pass = args.second_pass
 
         self.t_start, self.t_end = self.parse_range(self.threshold, 
                                                     "threshold", 0, 1, float)
@@ -141,7 +144,15 @@ class PixelSort:
                 rimg.size, edge_image)
             )
 
-        rimg = rimg.rotate(-angle, expand=True)
+        if self.second_pass:
+            rimg = rimg.rotate(90, expand=True)
+            rimg.putdata(
+                self.sort_image(list(rimg.getdata()), self.segmentation,
+                    self.skey, threshold, angle+90, size, randomness,
+                    rimg.size, edge_image)
+                )
+
+        rimg = rimg.rotate(-angle-(self.second_pass*90), expand=True)
         rimg = rimg.crop(((rimg.size[0]/2)-(self.img_size[0]/2),
                           (rimg.size[1]/2)-(self.img_size[1]/2),
                           (rimg.size[0]/2)+(self.img_size[0]/2),
@@ -211,10 +222,11 @@ class PixelSort:
                 segment_size = int(block_size*(1-(randomness*(random.random()+0.5))))
 
                 for x in range(segment_size, rimg_size[0]+block_size, block_size):
-                    full_row[x-segment_size:x] = sorted(
-                                                    full_row[x-segment_size:x],
-                                                    key=skey,
-                                                    reverse=(y//block_size)%2)
+                    start = max(x-segment_size, start_x+1)
+                    end = min(x, end_x-2)
+                    full_row[start:end] = sorted(full_row[start:end],
+                                                 key=skey,
+                                                 reverse=(y//block_size)%2)
 
                     segment_size = int(block_size*(1-(randomness*(random.random()+0.5))))
 

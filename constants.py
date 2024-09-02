@@ -22,3 +22,4 @@ HELP_SIZE = f"Size of \"melting\" or \"blocky\" segmentation. Value should be be
 HELP_RANDOMNESS = f"Randomness of \"blocky\" segmentation. Value should be between 0 and 0.5. Default is {RANDOMNESS_DEFAULT}"
 HELP_AMOUNT = f"Amount of images. Value should be an integer. Default is {AMOUNT_DEFAULT}"
 HELP_OUTPUT = f"Output image file."
+HELP_SECOND_PASS = f"Second pass flag."
