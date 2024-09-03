@@ -31,6 +31,7 @@ options:
   --sp              Second pass flag.
 ```
 
+
 ### Segmentation
 #### None
 Row segmentation isn't used.
@@ -41,7 +42,6 @@ Random values are used to determine segments. Use -sz argument to adjust size of
 #### Blocky
 This segmentation looks like "melting" segmentation but blocky. Use -sz and -r arguments to adjust size of blocks and randomness of segments' sizes.
 
-<br>
 
 ### Sorting key
 #### Hue, saturation and lightness
@@ -51,7 +51,6 @@ Pixels in segments are sorted by minimum or maximum value of red, green or blue 
 #### Red, green and blue
 Pixels in segments are sorted by value of red, green or blue color.
 
-<br>
 
 ### Animation
 You can pass two comma-separated values to threshold, angle, size and randomness. If amount is greater than 1, value of parameters will range from first to second value.
