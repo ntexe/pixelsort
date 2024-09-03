@@ -64,31 +64,35 @@ Original
 
 `python main.py img.jpg`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_edge_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_0001.jpg" width=50%>
 
 `python main.py img.jpg -a 45`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_edge_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_a45_0001.jpg" width=50%>
 
 `python main.py img.jpg -sg none`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_none_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_none_0001.jpg" width=50%>
+
+`python main.py img.jpg -sg none -a 45`
+
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_none_a45_0001.jpg" width=50%>
 
 `python main.py img.jpg -sg melting`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_melting_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_melting_0001.jpg" width=50%>
 
 `python main.py img.jpg -sg melting -a 45`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_melting_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_melting_a45_0001.jpg" width=50%>
 
 `python main.py img.jpg -sg blocky`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a0_sz0.050_r0.100_0001.png" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_0001.jpg" width=50%>
 
 `python main.py img.jpg -sg blocky -a 45`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img.jpg_sg_blocky_sk_lightness_t0.10_a45_sz0.050_r0.100_0001.png" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_a45_0001" width=50%>
 
 <br>
 

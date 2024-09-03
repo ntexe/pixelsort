@@ -59,7 +59,7 @@ class PixelSort:
     def parse_args(self):
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
         arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
-        arg_parser.add_argument("-o", default=OUTPUT_DEFAULT, dest="output",
+        arg_parser.add_argument("-o", default=None, dest="output",
                                 help=HELP_OUTPUT, metavar="output")
         arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
                                 default=SEGMENTATION_DEFAULT,
@@ -68,16 +68,16 @@ class PixelSort:
         arg_parser.add_argument("-sk", choices=SKEY_CHOICES,
                                 default=SKEY_DEFAULT, dest="skey_choice",
                                 help=HELP_SKEY, metavar="skey_choice")
-        arg_parser.add_argument("-t", default=str(THRESHOLD_DEFAULT),
+        arg_parser.add_argument("-t", default=THRESHOLD_DEFAULT,
                                 dest="threshold", help=HELP_THRESHOLD,
-                                metavar="threshold")
-        arg_parser.add_argument("-a", default=str(ANGLE_DEFAULT), dest="angle",
-                                help=HELP_ANGLE, metavar="angle")
-        arg_parser.add_argument("-sz", default=str(SIZE_DEFAULT), dest="size",
-                                help=HELP_SIZE, metavar="size")
-        arg_parser.add_argument("-r", default=str(RANDOMNESS_DEFAULT),
+                                metavar="threshold", type=float)
+        arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
+                                help=HELP_ANGLE, metavar="angle", type=int)
+        arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
+                                help=HELP_SIZE, metavar="size", type=float)
+        arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
                                 dest="randomness", help=HELP_RANDOMNESS,
-                                metavar="randomness")
+                                metavar="randomness", type=float)
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
         arg_parser.add_argument("--sp", action="store_true",
@@ -96,13 +96,22 @@ class PixelSort:
         self.output = args.output
         self.second_pass = args.second_pass
 
-        self.t_start, self.t_end = self.parse_range(self.threshold, 
+        if self.segmentation != "edge":
+            self.threshold = THRESHOLD_DEFAULT
+
+        if not self.segmentation in ("melting", "blocky"):
+            self.size = SIZE_DEFAULT
+
+        if self.segmentation != "blocky":
+            self.randomness = RANDOMNESS_DEFAULT
+
+        self.t_start, self.t_end = self.parse_range(str(self.threshold), 
                                                     "threshold", 0, 1, float)
-        self.a_start, self.a_end = self.parse_range(self.angle,
+        self.a_start, self.a_end = self.parse_range(str(self.angle),
                                                     "angle", 0, 360, int)
-        self.sz_start,self.sz_end= self.parse_range(self.size,
+        self.sz_start,self.sz_end= self.parse_range(str(self.size),
                                                     "size", 0, 1, float)
-        self.r_start, self.r_end = self.parse_range(self.randomness,
+        self.r_start, self.r_end = self.parse_range(str(self.randomness),
                                                     "randomness", 0, 1, float)
 
         if self.amount < 1:
@@ -159,9 +168,23 @@ class PixelSort:
                           (rimg.size[1]/2)+(self.img_size[1]/2)))
 
         print("saving...")
-        rimg.save(self.output.format(fn=self.img_filename,
-                sg=self.segmentation, sk=self.skey_choice, t=threshold,
-                a=angle, sz=size, r=randomness, i=i), quality=95)
+        rimg.save(self.generate_filename(self.img_filename, self.segmentation,
+            self.skey_choice, threshold, angle, size, randomness, i), quality=95)
+
+    def generate_filename(self, fn, sg, sk, t, a, sz, r, i):
+        if self.output:
+            return self.output
+
+        filename =  fn.split(".")[0]
+        filename += f"_sg_{sg}"    if sg != SEGMENTATION_DEFAULT else ""
+        filename += f"_sk_{sk}"    if sk != SKEY_DEFAULT         else ""
+        filename += f"_t{t:.3f}"   if t != THRESHOLD_DEFAULT     else ""
+        filename += f"_a{a}"       if a != ANGLE_DEFAULT         else ""
+        filename += f"_sz{sz:.3f}" if sz != SIZE_DEFAULT         else ""
+        filename += f"_r{r:.3f}"   if r != RANDOMNESS_DEFAULT    else ""
+        filename += f"_{i:04}"
+        filename += ".jpg"
+        return filename
 
     def sort_image(self, image_data, segmentation, skey,
                    threshold, angle, size, randomness, rimg_size, 

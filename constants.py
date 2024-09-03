@@ -1,16 +1,16 @@
 SEGMENTATION_DEFAULT = "edge"
 SEGMENTATION_CHOICES = ["none", "edge", "melting", "blocky"]
+#SEGMENTATION_SHORT = {"none": "n", "edge": "e", "melting": "m", "blocky": "b"}
 
 SKEY_DEFAULT = "lightness"
 SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red", "green", "blue"]
+#SKEY_SHORT = {"hue": "h", "lightness": "l", "saturation": "s", "min_value": "minv", "max_value": "maxv", "red": "r", "green": "g", "blue": "b"}
 
 THRESHOLD_DEFAULT = 0.1
 ANGLE_DEFAULT = 0
 SIZE_DEFAULT = 0.05
 RANDOMNESS_DEFAULT = 0.1
 AMOUNT_DEFAULT = 1
-
-OUTPUT_DEFAULT = "{fn}_sg_{sg}_sk_{sk}_t{t:.2f}_a{a}_sz{sz:.3f}_r{r:.3f}_{i:04}.png"
 
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in pictures."
 HELP_INPUT_FILE = "Input image file."
