@@ -92,7 +92,7 @@ Original
 
 `python main.py img.jpg -sg blocky -a 45`
 
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_a45_0001" width=50%>
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_a45_0001.jpg" width=50%>
 
 <br>
 
@@ -102,5 +102,4 @@ TODO:
 
 - add multithreading
 - add masking
-- make filenames shorter
 - rotate option for second pass
