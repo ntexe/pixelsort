@@ -99,3 +99,4 @@ TODO:
 - add multithreading
 - add masking
 - make filenames shorter
+- rotate option for second pass
