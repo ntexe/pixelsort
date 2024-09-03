@@ -35,11 +35,11 @@ options:
 #### None
 Row segmentation isn't used.
 #### Edge
-The tool detects edges and determines segments based on this data
+The tool detects edges and determines segments based on this data. Use -t parameter to adjust threshold.
 #### Melting
 Random values are used to determine segments. Use -sz argument to adjust size of the segments.
 #### Blocky
-This segmentation looks like "melting" segmentation but blocky.
+This segmentation looks like "melting" segmentation but blocky. Use -sz and -r arguments to adjust size of blocks and randomness of segments' sizes.
 
 <br>
 
@@ -54,7 +54,7 @@ Pixels in segments are sorted by value of red, green or blue color.
 <br>
 
 ### Animation
-You can pass range of values to threshold, angle, size and randomness. If amount is greater than 1, value of parameters will range from first to second value.
+You can pass two comma-separated values to threshold, angle, size and randomness. If amount is greater than 1, value of parameters will range from first to second value.
 Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with angle parameter 0, 22 and 45.
 
 ### Examples
