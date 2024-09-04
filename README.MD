@@ -96,10 +96,13 @@ Original
 
 <br>
 
-Tested on Windows 10 22H2 Python 3.11.9 (x64)
+Tested on:
+- Windows 10 22H2 Python 3.11.9 (x64)
+- Android 12 Termux Python 3.11.9 (arm64)
 
 TODO:
-
 - add multithreading
 - add masking
 - rotate option for second pass
+- argument to downscale the image before sorting
+- argument to make sorting reversed
