@@ -46,18 +46,19 @@ class PixelSort:
 
         print("opening picture...")
 
-        with Image.open(self.input_file) as img:
-            self.img_size = img.size
-            self.img_filename=os.path.basename(os.path.realpath(img.filename))
+        img = Image.open(self.input_file)
 
-            self.img = img.convert("RGB")
+        self.img_filename = os.path.basename(os.path.realpath(img.filename))
+        self.img_size = img.size
 
-            start_time = time.monotonic()
+        self.img = img.convert("RGB")
 
-            for i in range(1, self.amount+1):
-                self.process_image(i)
+        start_time = time.monotonic()
 
-            print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
+        for i in range(1, self.amount+1):
+            self.process_image(i)
+
+        print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
 
     def parse_args(self):
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
@@ -85,6 +86,8 @@ class PixelSort:
                                 help=HELP_AMOUNT, metavar="amount", type=int)
         arg_parser.add_argument("--sp", action="store_true",
                                 dest="second_pass", help=HELP_SECOND_PASS)
+        arg_parser.add_argument("--rev", action="store_true", dest="reverse",
+                                help=HELP_REVERSE)
 
         args = arg_parser.parse_args()
         self.input_file = args.input_file
@@ -98,6 +101,7 @@ class PixelSort:
         self.amount = args.amount
         self.output = args.output
         self.second_pass = args.second_pass
+        self.reverse = args.reverse
 
         if self.segmentation != "edge":
             self.threshold = THRESHOLD_DEFAULT
@@ -182,6 +186,8 @@ class PixelSort:
         filename += f"_a{a}"       if a != ANGLE_DEFAULT         else ""
         filename += f"_sz{sz:.3f}" if sz != SIZE_DEFAULT         else ""
         filename += f"_r{r:.3f}"   if r != RANDOMNESS_DEFAULT    else ""
+        filename += "_sp"          if self.second_pass           else ""
+        filename += "_rev"         if self.reverse               else ""
         filename += f"_{i:04}"
         filename += ".jpg"
         return filename
@@ -214,7 +220,7 @@ class PixelSort:
             row = full_row[start_x:end_x]
 
             if segmentation == "none":
-                row.sort(key=skey)
+                row.sort(key=skey, reverse=self.reverse)
 
             if segmentation == "edge":
                 segment_begin = 0
@@ -225,7 +231,8 @@ class PixelSort:
                     if pixel_utils.lightness(edge_row[x]) > threshold:
                         if x - segment_begin > 1:
                             row[segment_begin:x] = sorted(
-                                        row[segment_begin:x], key=skey)
+                                        row[segment_begin:x], key=skey,
+                                        reverse=self.reverse)
 
                         segment_begin = x+1
 
@@ -236,7 +243,8 @@ class PixelSort:
                 row[:offset] = sorted(row[:offset], key=skey)
 
                 for x in range(offset, len(row), width):
-                    row[x:x+width] = sorted(row[x:x+width], key=skey)
+                    row[x:x+width] = sorted(row[x:x+width], key=skey,
+                                            reverse=self.reverse)
 
             if segmentation == "blocky":
                 block_size = int(size*self.img_size[0])
@@ -248,7 +256,7 @@ class PixelSort:
                     end = min(x, end_x-2)
                     full_row[start:end] = sorted(full_row[start:end],
                                                  key=skey,
-                                                 reverse=(y//block_size)%2)
+                                                 reverse=(y//block_size)%2 != self.reverse)
 
                     segment_size = int(block_size*(1-(randomness*(random.random()+0.5))))
 

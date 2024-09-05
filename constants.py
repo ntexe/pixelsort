@@ -23,3 +23,4 @@ HELP_RANDOMNESS = f"Randomness of \"blocky\" segmentation. Value should be betwe
 HELP_AMOUNT = f"Amount of images. Value should be an integer. Default is {AMOUNT_DEFAULT}"
 HELP_OUTPUT = f"Output image file."
 HELP_SECOND_PASS = f"Second pass flag."
+HELP_REVERSE = f"Reverse sort flag."
