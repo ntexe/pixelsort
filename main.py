@@ -32,6 +32,7 @@ class PixelSort:
         self.a_start, self.a_end, self.angle = [ANGLE_DEFAULT]*3
         self.sz_start, self.sz_end, self.size = [SIZE_DEFAULT]*3
         self.r_start, self.r_end, self.randomness = [RANDOMNESS_DEFAULT]*3
+        self.sa_start, self.sa_end, self.sangle = [SANGLE_DEFAULT]*3
 
         self.amount = AMOUNT_DEFAULT
 
@@ -63,8 +64,8 @@ class PixelSort:
     def parse_args(self):
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
         arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
-        arg_parser.add_argument("-o", default=None, dest="output",
-                                help=HELP_OUTPUT, metavar="output")
+        arg_parser.add_argument("-o", default=None, dest="output_file",
+                                help=HELP_OUTPUT, metavar="output_file")
         arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
                                 default=SEGMENTATION_DEFAULT,
                                 dest="segmentation", help=HELP_SEGMENTATION,
@@ -84,6 +85,8 @@ class PixelSort:
                                 metavar="randomness", type=float)
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
+        arg_parser.add_argument("-sa", default=SANGLE_DEFAULT, dest="sangle",
+                                help=HELP_SANGLE, metavar="sangle")
         arg_parser.add_argument("--sp", action="store_true",
                                 dest="second_pass", help=HELP_SECOND_PASS)
         arg_parser.add_argument("--rev", action="store_true", dest="reverse",
@@ -91,6 +94,7 @@ class PixelSort:
 
         args = arg_parser.parse_args()
         self.input_file = args.input_file
+        self.output_file = args.output_file
         self.segmentation = args.segmentation
         self.skey_choice = args.skey_choice
         self.skey = skeys[self.skey_choice]
@@ -99,7 +103,7 @@ class PixelSort:
         self.size = args.size
         self.randomness = args.randomness
         self.amount = args.amount
-        self.output = args.output
+        self.sangle = args.sangle
         self.second_pass = args.second_pass
         self.reverse = args.reverse
 
@@ -112,14 +116,16 @@ class PixelSort:
         if self.segmentation != "blocky":
             self.randomness = RANDOMNESS_DEFAULT
 
-        self.t_start, self.t_end = self.parse_range(str(self.threshold), 
-                                                    "threshold", 0, 1, float)
-        self.a_start, self.a_end = self.parse_range(str(self.angle),
-                                                    "angle", 0, 360, int)
-        self.sz_start,self.sz_end= self.parse_range(str(self.size),
-                                                    "size", 0, 1, float)
-        self.r_start, self.r_end = self.parse_range(str(self.randomness),
-                                                    "randomness", 0, 1, float)
+        self.t_start, self.t_end =  self.parse_range(str(self.threshold), 
+                                                     "threshold", 0, 1, float)
+        self.a_start, self.a_end =  self.parse_range(str(self.angle),
+                                                     "angle", 0, 360, int)
+        self.sz_start,self.sz_end = self.parse_range(str(self.size), 
+                                                     "size", 0, 1, float)
+        self.r_start, self.r_end =  self.parse_range(str(self.randomness),
+                                                     "randomness", 0, 1, float)
+        self.sa_start,self.sa_end = self.parse_range(str(self.sangle),
+                                                     "sangle", 0, 360, int)
 
         if self.amount < 1:
             raise RuntimeError("Amount value is invalid")
@@ -144,6 +150,7 @@ class PixelSort:
         angle = int(self.get_balance(self.a_start, self.a_end, i, self.amount))
         size = self.get_balance(self.sz_start, self.sz_end, i, self.amount)
         randomness = self.get_balance(self.r_start, self.r_end, i, self.amount)
+        sangle = int(self.get_balance(self.sa_start, self.sa_end, i, self.amount))
 
         print(f"image {i}/{self.amount}")
         rimg = self.img.rotate(angle, expand=True)
@@ -158,14 +165,17 @@ class PixelSort:
         rimg.putdata(self.image_data)
 
         if self.second_pass:
-            rimg = rimg.rotate(90, expand=True)
+            rimg = rimg.rotate(sangle, expand=True)
 
+            if self.segmentation == "edge":
+                self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
+                
             self.image_data = list(rimg.getdata())
             self.sort_image(self.segmentation, self.skey, threshold, angle+90,
                             size, randomness, rimg.size)
             rimg.putdata(self.image_data)
 
-        rimg = rimg.rotate(-angle-(self.second_pass*90), expand=True)
+        rimg = rimg.rotate(-angle-(self.second_pass*sangle), expand=True)
         rimg = rimg.crop(((rimg.size[0]/2)-(self.img_size[0]/2),
                           (rimg.size[1]/2)-(self.img_size[1]/2),
                           (rimg.size[0]/2)+(self.img_size[0]/2),
@@ -173,11 +183,11 @@ class PixelSort:
 
         print("saving...")
         rimg.save(self.generate_filename(self.img_filename, self.segmentation,
-            self.skey_choice, threshold, angle, size, randomness, i), quality=95)
+            self.skey_choice, threshold, angle, size, randomness, sangle, i), quality=95)
 
-    def generate_filename(self, fn, sg, sk, t, a, sz, r, i):
-        if self.output:
-            return self.output
+    def generate_filename(self, fn, sg, sk, t, a, sz, r, sa, i):
+        if self.output_file:
+            return self.output_file
 
         filename =  fn.split(".")[0]
         filename += f"_sg_{sg}"    if sg != SEGMENTATION_DEFAULT else ""
@@ -186,6 +196,7 @@ class PixelSort:
         filename += f"_a{a}"       if a != ANGLE_DEFAULT         else ""
         filename += f"_sz{sz:.3f}" if sz != SIZE_DEFAULT         else ""
         filename += f"_r{r:.3f}"   if r != RANDOMNESS_DEFAULT    else ""
+        filename += f"_sa{sa}"     if sa != SANGLE_DEFAULT       else ""
         filename += "_sp"          if self.second_pass           else ""
         filename += "_rev"         if self.reverse               else ""
         filename += f"_{i:04}"
