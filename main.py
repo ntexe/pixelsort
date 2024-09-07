@@ -116,6 +116,9 @@ class PixelSort:
         if self.segmentation != "blocky":
             self.randomness = RANDOMNESS_DEFAULT
 
+        if not self.second_pass:
+            self.sangle = SANGLE_DEFAULT
+
         self.t_start, self.t_end =  self.parse_range(str(self.threshold), 
                                                      "threshold", 0, 1, float)
         self.a_start, self.a_end =  self.parse_range(str(self.angle),
@@ -163,27 +166,36 @@ class PixelSort:
         self.sort_image(self.segmentation, self.skey, threshold, angle, size,
                         randomness, rimg.size)
         rimg.putdata(self.image_data)
+        rimg = rimg.rotate(-angle, expand=True)
+        rimg = rimg.crop(self.get_crop_dimensions(rimg.size))
 
         if self.second_pass:
-            rimg = rimg.rotate(sangle, expand=True)
+            rimg = rimg.rotate(angle+sangle, expand=True)
 
             if self.segmentation == "edge":
                 self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
                 
             self.image_data = list(rimg.getdata())
-            self.sort_image(self.segmentation, self.skey, threshold, angle+90,
-                            size, randomness, rimg.size)
+            self.sort_image(self.segmentation, self.skey, threshold,
+                            angle+sangle, size, randomness, rimg.size)
             rimg.putdata(self.image_data)
 
-        rimg = rimg.rotate(-angle-(self.second_pass*sangle), expand=True)
-        rimg = rimg.crop(((rimg.size[0]/2)-(self.img_size[0]/2),
-                          (rimg.size[1]/2)-(self.img_size[1]/2),
-                          (rimg.size[0]/2)+(self.img_size[0]/2),
-                          (rimg.size[1]/2)+(self.img_size[1]/2)))
+            rimg = rimg.rotate(-(angle+sangle), expand=True)
+            rimg = rimg.crop(self.get_crop_dimensions(rimg.size))
 
         print("saving...")
-        rimg.save(self.generate_filename(self.img_filename, self.segmentation,
-            self.skey_choice, threshold, angle, size, randomness, sangle, i), quality=95)
+
+        filename = self.generate_filename(self.img_filename, self.segmentation,
+            self.skey_choice, threshold, angle, size, randomness, sangle, i)
+
+        rimg.save(filename, quality=95)
+        print(f"saved as {filename}")
+
+    def get_crop_dimensions(self, rimg_size):
+        return ((rimg_size[0]/2)-(self.img_size[0]/2),
+                (rimg_size[1]/2)-(self.img_size[1]/2),
+                (rimg_size[0]/2)+(self.img_size[0]/2),
+                (rimg_size[1]/2)+(self.img_size[1]/2))
 
     def generate_filename(self, fn, sg, sk, t, a, sz, r, sa, i):
         if self.output_file:
