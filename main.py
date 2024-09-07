@@ -43,6 +43,15 @@ class PixelSort:
         self.edge_image_data = []
 
     def main(self):
+        """
+        Main function in this class.
+
+        Parameters:
+        None
+
+        Returns:
+        None
+        """
         self.parse_args()
 
         print("opening picture...")
@@ -62,6 +71,15 @@ class PixelSort:
         print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
 
     def parse_args(self):
+        """
+        Function that parses and processes command line arguments.
+
+        Parameters:
+        None
+
+        Returns:
+        None
+        """
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
         arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
         arg_parser.add_argument("-o", default=None, dest="output_file",
@@ -120,40 +138,75 @@ class PixelSort:
             self.sangle = SANGLE_DEFAULT
 
         self.t_start, self.t_end =  self.parse_range(str(self.threshold), 
-                                                     "threshold", 0, 1, float)
-        self.a_start, self.a_end =  self.parse_range(str(self.angle),
-                                                     "angle", 0, 360, int)
+                                                     "threshold", 0, 1)
+        self.a_start, self.a_end =  map(int, self.parse_range(str(self.angle),
+                                                     "angle", 0, 360))
         self.sz_start,self.sz_end = self.parse_range(str(self.size), 
-                                                     "size", 0, 1, float)
+                                                     "size", 0, 1)
         self.r_start, self.r_end =  self.parse_range(str(self.randomness),
-                                                     "randomness", 0, 1, float)
-        self.sa_start,self.sa_end = self.parse_range(str(self.sangle),
-                                                     "sangle", 0, 360, int)
+                                                     "randomness", 0, 1)
+        self.sa_start,self.sa_end = map(int, self.parse_range(str(self.sangle),
+                                                     "sangle", 0, 360))
 
         if self.amount < 1:
             raise RuntimeError("Amount value is invalid")
 
-    def parse_range(self, arg, arg_name, minv, maxv, vtype):
+    def parse_range(self, arg: str, arg_name: str, minv: float, maxv: float) -> tuple:
+        """
+        Function that parses string with two comma-separated values and checks
+        if these values match the following expression: minv <= x <= maxv. If
+        not, raises RuntimeError.
+
+        Parameters:
+        arg (str):      String to parse
+        arg_name (str): Name of argument (used for RuntimeError text)
+        minv (float):   Minimum of each value
+        maxv (float):   Maximum of each value
+
+        Returns:
+        tuple:          Tuple with two float values
+        """
         if len(arg.split(",")) > 2:
             raise RuntimeError(f"Too many values in {arg_name} argument.")
 
-        start = vtype(arg.split(",")[0])
-        end = vtype(arg.split(",")[-1])
+        start = float(arg.split(",")[0])
+        end = float(arg.split(",")[-1])
 
         if (not minv <= start <= maxv) or (not minv <= end <= maxv):
             raise RuntimeError(f"{arg_name.capitalize()} value is invalid.")
 
-        return start, end
+        return (start, end)
 
-    def get_balance(self, minv, maxv, i, max_i):
-        return (minv*(max(1, max_i-1)-(i-1)) + maxv*(i-1))/max(1, max_i-1)
+    def get_balance(self, v: tuple, i:int, max_i:int) -> float:
+        """
+        Function that mixes two values minv and maxv with ratio i:(max_i/2)
 
-    def process_image(self, i):
-        threshold = self.get_balance(self.t_start, self.t_end, i, self.amount)
-        angle = int(self.get_balance(self.a_start, self.a_end, i, self.amount))
-        size = self.get_balance(self.sz_start, self.sz_end, i, self.amount)
-        randomness = self.get_balance(self.r_start, self.r_end, i, self.amount)
-        sangle = int(self.get_balance(self.sa_start, self.sa_end, i, self.amount))
+        Parameters:
+        v (tuple):   Tuple with two float values
+        i (int):     Argument used for ratio
+        max_i (int): Argument used for ratio. Must be greater than or equal to i
+
+        Returns:
+        float:       Mixed value
+        """
+        return (v[0]*(max(1, max_i-1)-(i-1)) + v[1]*(i-1))/max(1, max_i-1)
+
+    def process_image(self, i: int):
+        """
+        Function to process image. 
+
+        Parameters:
+        i (int): Number of image
+
+        Returns:
+        None
+        """
+
+        threshold = self.get_balance((self.t_start, self.t_end), i, self.amount)
+        angle = int(self.get_balance((self.a_start, self.a_end), i, self.amount))
+        size = self.get_balance((self.sz_start, self.sz_end), i, self.amount)
+        randomness = self.get_balance((self.r_start, self.r_end), i, self.amount)
+        sangle = int(self.get_balance((self.sa_start, self.sa_end), i, self.amount))
 
         print(f"image {i}/{self.amount}")
         rimg = self.img.rotate(angle, expand=True)
@@ -166,8 +219,9 @@ class PixelSort:
         self.sort_image(self.segmentation, self.skey, threshold, angle, size,
                         randomness, rimg.size)
         rimg.putdata(self.image_data)
+
         rimg = rimg.rotate(-angle, expand=True)
-        rimg = rimg.crop(self.get_crop_dimensions(rimg.size))
+        rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
         if self.second_pass:
             rimg = rimg.rotate(angle+sangle, expand=True)
@@ -181,7 +235,7 @@ class PixelSort:
             rimg.putdata(self.image_data)
 
             rimg = rimg.rotate(-(angle+sangle), expand=True)
-            rimg = rimg.crop(self.get_crop_dimensions(rimg.size))
+            rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
         print("saving...")
 
@@ -191,19 +245,47 @@ class PixelSort:
         rimg.save(filename, quality=95)
         print(f"saved as {filename}")
 
-    def get_crop_dimensions(self, rimg_size):
+    def get_crop_rectangle(self, rimg_size: tuple):
+        """
+        Function that calculates returns crop rectangle.
+
+        Parameters:
+        rimg_size (tuple): Tuple with bigger image width and height
+
+        Returns:
+        tuple: Tuple containing crop rectange values
+        """
+
         return ((rimg_size[0]/2)-(self.img_size[0]/2),
                 (rimg_size[1]/2)-(self.img_size[1]/2),
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_filename(self, fn, sg, sk, t, a, sz, r, sa, i):
+    def generate_filename(self, fn: str, sg: str, skc: str, t: float, a: int,
+                          sz: float, r: float, sa: int, i: int) -> str:
+        """
+        Function that generates and returns filename for output image.
+
+        Parameters:
+        fn (str):       Input image file name
+        sg (str):       Segmentation
+        skc (str):      Sorting key choice
+        t (float):      Threshold
+        a (int):        Angle
+        sz (float):     Size
+        r (float):      Randomness
+        sa (int):       Second pass angle
+        i (int):        Number of image
+
+        Returns:
+        filename (str): Output file name
+        """
         if self.output_file:
             return self.output_file
 
         filename =  fn.split(".")[0]
         filename += f"_sg_{sg}"    if sg != SEGMENTATION_DEFAULT else ""
-        filename += f"_sk_{sk}"    if sk != SKEY_DEFAULT         else ""
+        filename += f"_sk_{skc}"   if skc != SKEY_DEFAULT        else ""
         filename += f"_t{t:.3f}"   if t != THRESHOLD_DEFAULT     else ""
         filename += f"_a{a}"       if a != ANGLE_DEFAULT         else ""
         filename += f"_sz{sz:.3f}" if sz != SIZE_DEFAULT         else ""
@@ -215,8 +297,24 @@ class PixelSort:
         filename += ".jpg"
         return filename
 
-    def sort_image(self, segmentation, skey, threshold, angle, size,
-                   randomness, rimg_size):
+    def sort_image(self, segmentation: str, skey, threshold: float, angle: int,
+                   size: float, randomness: float, rimg_size: tuple):
+        """
+        Function that sorts image.
+
+        Parameters:
+        segmantation (str): Segmentation
+        skey:               Sorting key
+        threshold (float):  Threshold
+        angle (int):        Angle
+        size (float):       Size
+        randomness (float): Randomness
+        rimg_size (tuple):  Processed image size
+
+        Returns:
+        None
+        """
+
         x1, y1 = 0, 0
 
         sin_alpha = math.sin(math.radians(angle%90))
