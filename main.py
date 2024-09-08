@@ -201,11 +201,11 @@ class PixelSort:
         None
         """
 
-        threshold =  self.get_balance(self.t_range, i, self.amount)
-        angle =  int(self.get_balance(self.a_range, i, self.amount))
-        size =       self.get_balance(self.sz_range, i, self.amount)
-        randomness = self.get_balance(self.r_range, i, self.amount)
-        sangle = int(self.get_balance(self.sa_range, i, self.amount))
+        threshold =  round(self.get_balance(self.t_range, i, self.amount), 3)
+        angle =        int(self.get_balance(self.a_range, i, self.amount))
+        size =       round(self.get_balance(self.sz_range, i, self.amount), 3)
+        randomness = round(self.get_balance(self.r_range, i, self.amount), 3)
+        sangle =       int(self.get_balance(self.sa_range, i, self.amount))
 
         print(f"image {i}/{self.amount}")
         rimg = self.img.rotate(angle, expand=True)
@@ -283,15 +283,15 @@ class PixelSort:
             return self.output_file
 
         filename =  fn.split(".")[0]
-        filename += f"_sg_{sg}"    if sg != SEGMENTATION_DEFAULT else ""
-        filename += f"_sk_{skc}"   if skc != SKEY_DEFAULT        else ""
-        filename += f"_t{t:.3f}"   if t != THRESHOLD_DEFAULT     else ""
-        filename += f"_a{a}"       if a != ANGLE_DEFAULT         else ""
-        filename += f"_sz{sz:.3f}" if sz != SIZE_DEFAULT         else ""
-        filename += f"_r{r:.3f}"   if r != RANDOMNESS_DEFAULT    else ""
-        filename += f"_sa{sa}"     if sa != SANGLE_DEFAULT       else ""
-        filename += "_sp"          if self.second_pass           else ""
-        filename += "_rev"         if self.reverse               else ""
+        filename += f"_sg_{sg}"    if sg != SEGMENTATION_DEFAULT            else ""
+        filename += f"_sk_{skc}"   if skc != SKEY_DEFAULT                   else ""
+        filename += f"_t{t:.3f}"   if self.threshold != THRESHOLD_DEFAULT   else ""
+        filename += f"_a{a}"       if self.angle != ANGLE_DEFAULT           else ""
+        filename += f"_sz{sz:.3f}" if self.size != SIZE_DEFAULT             else ""
+        filename += f"_r{r:.3f}"   if self.randomness != RANDOMNESS_DEFAULT else ""
+        filename += f"_sa{sa}"     if self.sangle != SANGLE_DEFAULT         else ""
+        filename += "_sp"          if self.second_pass                      else ""
+        filename += "_rev"         if self.reverse                          else ""
         filename += f"_{i:04}"
         filename += ".jpg"
         return filename

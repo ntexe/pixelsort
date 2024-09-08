@@ -29,8 +29,8 @@ options:
   -a angle          Angle to rotate the image before sorting in degrees. Value should be between 0 and 360. Default is 0
   -sz size          Size of "melting" or "blocky" segmentation. Value should be between 0 and 1. Default is 0.05
   -r randomness     Randomness of "blocky" segmentation. Value should be between 0 and 0.5. Default is 0.1
-  -am amount        Amount of images. Value should be an integer. Default is 1
-  -sa sangle        Angle for second pass. Default is 90.
+  -am amount        Amount of images. Value should be a natural value. Default is 1
+  -sa sangle        Angle for second pass. Value should be between 0 and 360. Default is 90.
   --sp              Second pass flag.
   --rev             Reverse sort flag.
 ```
