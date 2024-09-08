@@ -11,16 +11,18 @@ pip install Pillow
 
 ## Usage
 ```
-usage: main.py [-h] [-o output] [-sg segmentation] [-sk skey_choice] [-t threshold] [-a angle] [-sz size] [-r randomness] [-am amount] [--sp] input_file
+usage: main.py [-h] [-o output_file] [-sg segmentation] [-sk skey_choice] [-t threshold] [-a angle] [-sz size] [-r randomness] [-am amount] [-sa sangle]
+               [--sp] [--rev]
+               input_file
 
-PixelSort is a python tool for sorting pixels in pictures.
+PixelSort is a python tool for sorting pixels in images.
 
 positional arguments:
   input_file        Input image file.
 
 options:
   -h, --help        show this help message and exit
-  -o output         Output image file.
+  -o output_file    Output image file.
   -sg segmentation  Segmentation. Available choices: none, edge, melting, blocky. Default is edge.
   -sk skey_choice   Sorting key. Available choices: hue, lightness, saturation, min_value, max_value, red, green, blue. Default is lightness.
   -t threshold      Threshold for edge detection. Value should be between 0 and 1. Default is 0.1.
@@ -28,7 +30,9 @@ options:
   -sz size          Size of "melting" or "blocky" segmentation. Value should be between 0 and 1. Default is 0.05
   -r randomness     Randomness of "blocky" segmentation. Value should be between 0 and 0.5. Default is 0.1
   -am amount        Amount of images. Value should be an integer. Default is 1
+  -sa sangle        Angle for second pass. Default is 90.
   --sp              Second pass flag.
+  --rev             Reverse sort flag.
 ```
 
 ### Segmentation
