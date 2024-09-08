@@ -28,11 +28,11 @@ class PixelSort:
         self.skey_choice = SKEY_DEFAULT
         self.skey = skeys[self.skey_choice]
 
-        self.t_start, self.t_end, self.threshold = [THRESHOLD_DEFAULT]*3
-        self.a_start, self.a_end, self.angle = [ANGLE_DEFAULT]*3
-        self.sz_start, self.sz_end, self.size = [SIZE_DEFAULT]*3
-        self.r_start, self.r_end, self.randomness = [RANDOMNESS_DEFAULT]*3
-        self.sa_start, self.sa_end, self.sangle = [SANGLE_DEFAULT]*3
+        self.t_range, self.threshold = (THRESHOLD_DEFAULT,)*2, THRESHOLD_DEFAULT
+        self.a_range, self.angle = (ANGLE_DEFAULT,)*2, ANGLE_DEFAULT
+        self.sz_range, self.size = (SIZE_DEFAULT,)*2, SIZE_DEFAULT
+        self.r_range, self.randomness = (RANDOMNESS_DEFAULT,)*2, RANDOMNESS_DEFAULT
+        self.sa_range, self.sangle = (SANGLE_DEFAULT,)*2, SANGLE_DEFAULT
 
         self.amount = AMOUNT_DEFAULT
 
@@ -93,14 +93,14 @@ class PixelSort:
                                 help=HELP_SKEY, metavar="skey_choice")
         arg_parser.add_argument("-t", default=THRESHOLD_DEFAULT,
                                 dest="threshold", help=HELP_THRESHOLD,
-                                metavar="threshold", type=float)
+                                metavar="threshold")
         arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
-                                help=HELP_ANGLE, metavar="angle", type=int)
+                                help=HELP_ANGLE, metavar="angle")
         arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
-                                help=HELP_SIZE, metavar="size", type=float)
+                                help=HELP_SIZE, metavar="size")
         arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
                                 dest="randomness", help=HELP_RANDOMNESS,
-                                metavar="randomness", type=float)
+                                metavar="randomness")
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
         arg_parser.add_argument("-sa", default=SANGLE_DEFAULT, dest="sangle",
@@ -137,16 +137,15 @@ class PixelSort:
         if not self.second_pass:
             self.sangle = SANGLE_DEFAULT
 
-        self.t_start, self.t_end =  self.parse_range(str(self.threshold), 
-                                                     "threshold", 0, 1)
-        self.a_start, self.a_end =  map(int, self.parse_range(str(self.angle),
-                                                     "angle", 0, 360))
-        self.sz_start,self.sz_end = self.parse_range(str(self.size), 
-                                                     "size", 0, 1)
-        self.r_start, self.r_end =  self.parse_range(str(self.randomness),
-                                                     "randomness", 0, 1)
-        self.sa_start,self.sa_end = map(int, self.parse_range(str(self.sangle),
-                                                     "sangle", 0, 360))
+        self.t_range =  self.parse_range(str(self.threshold), "threshold",
+                                                                 0, 1)
+        self.a_range =  tuple(map(int, self.parse_range(str(self.angle), "angle",
+                                                                 0, 360)))
+        self.sz_range = self.parse_range(str(self.size), "size", 0, 1)
+        self.r_range =  self.parse_range(str(self.randomness), "randomness",
+                                                                 0, 1)
+        self.sa_range = tuple(map(int, self.parse_range(str(self.sangle), "sangle",
+                                                                 0, 360)))
 
         if self.amount < 1:
             raise RuntimeError("Amount value is invalid")
@@ -202,11 +201,11 @@ class PixelSort:
         None
         """
 
-        threshold = self.get_balance((self.t_start, self.t_end), i, self.amount)
-        angle = int(self.get_balance((self.a_start, self.a_end), i, self.amount))
-        size = self.get_balance((self.sz_start, self.sz_end), i, self.amount)
-        randomness = self.get_balance((self.r_start, self.r_end), i, self.amount)
-        sangle = int(self.get_balance((self.sa_start, self.sa_end), i, self.amount))
+        threshold =  self.get_balance(self.t_range, i, self.amount)
+        angle =  int(self.get_balance(self.a_range, i, self.amount))
+        size =       self.get_balance(self.sz_range, i, self.amount)
+        randomness = self.get_balance(self.r_range, i, self.amount)
+        sangle = int(self.get_balance(self.sa_range, i, self.amount))
 
         print(f"image {i}/{self.amount}")
         rimg = self.img.rotate(angle, expand=True)

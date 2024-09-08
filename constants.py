@@ -13,7 +13,7 @@ SIZE_DEFAULT = 0.05
 RANDOMNESS_DEFAULT = 0.1
 AMOUNT_DEFAULT = 1
 
-HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in pictures."
+HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
 HELP_INPUT_FILE = "Input image file."
 HELP_OUTPUT = "Output image file."
 HELP_SEGMENTATION = f"Segmentation. Available choices: {', '.join(SEGMENTATION_CHOICES)}. Default is {SEGMENTATION_DEFAULT}."
