@@ -84,6 +84,9 @@ class PixelSort:
         arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
         arg_parser.add_argument("-o", default=None, dest="output_file",
                                 help=HELP_OUTPUT, metavar="output_file")
+        arg_parser.add_argument("-f", choices=FORMAT_CHOICES,
+                                default=FORMAT_DEFAULT, dest="format",
+                                help=HELP_FORMAT, metavar="format")
         arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
                                 default=SEGMENTATION_DEFAULT,
                                 dest="segmentation", help=HELP_SEGMENTATION,
@@ -113,6 +116,7 @@ class PixelSort:
         args = arg_parser.parse_args()
         self.input_file = args.input_file
         self.output_file = args.output_file
+        self.format = args.format
         self.segmentation = args.segmentation
         self.skey_choice = args.skey_choice
         self.skey = skeys[self.skey_choice]
@@ -293,7 +297,7 @@ class PixelSort:
         filename += "_sp"          if self.second_pass                      else ""
         filename += "_rev"         if self.reverse                          else ""
         filename += f"_{i:04}"
-        filename += ".jpg"
+        filename += f".{fn.split('.')[-1] if self.format == 'same' else self.format}"
         return filename
 
     def sort_image(self, segmentation: str, skey, threshold: float, angle: int,
@@ -358,7 +362,7 @@ class PixelSort:
 
             if segmentation == "melting":
                 width = int(size*self.img_size[0]*(1-(0.5*(random.random()+0.5))))
-                offset = random.randint(0, int(size*self.img_size[0]))
+                offset = int(size*self.img_size[0]*random.random())
 
                 row[:offset] = sorted(row[:offset], key=skey)
 

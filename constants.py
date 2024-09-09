@@ -6,6 +6,9 @@ SKEY_DEFAULT = "lightness"
 SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red", "green", "blue"]
 #SKEY_SHORT = {"hue": "h", "lightness": "l", "saturation": "s", "min_value": "minv", "max_value": "maxv", "red": "r", "green": "g", "blue": "b"}
 
+FORMAT_DEFAULT = "same"
+FORMAT_CHOICES = ["png", "jpg", "same"]
+
 THRESHOLD_DEFAULT = 0.1
 ANGLE_DEFAULT = 0
 SANGLE_DEFAULT = 90
@@ -16,6 +19,7 @@ AMOUNT_DEFAULT = 1
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
 HELP_INPUT_FILE = "Input image file."
 HELP_OUTPUT = "Output image file."
+HELP_FORMAT = f"Output image format. Available choices: {', '.join(FORMAT_CHOICES)}. Default is {FORMAT_DEFAULT}"
 HELP_SEGMENTATION = f"Segmentation. Available choices: {', '.join(SEGMENTATION_CHOICES)}. Default is {SEGMENTATION_DEFAULT}."
 HELP_SKEY = f"Sorting key. Available choices: {', '.join(SKEY_CHOICES)}. Default is {SKEY_DEFAULT}."
 HELP_THRESHOLD = f"Threshold for edge detection. Value should be between 0 and 1. Default is {THRESHOLD_DEFAULT}."
