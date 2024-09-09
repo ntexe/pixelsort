@@ -3,15 +3,15 @@ import functools
 
 @functools.cache
 def hue(pixel):
-    return colorsys.rgb_to_hls(*[i/255 for i in pixel[:3]])[0]
+    return int(colorsys.rgb_to_hls(*[i/255 for i in pixel[:3]])[0]*255)
 
 @functools.cache
 def lightness(pixel):
-    return colorsys.rgb_to_hls(*[i/255 for i in pixel[:3]])[1]
+    return int(colorsys.rgb_to_hls(*[i/255 for i in pixel[:3]])[1]*255)
 
 @functools.cache
 def saturation(pixel):
-    return colorsys.rgb_to_hls(*[i/255 for i in pixel[:3]])[2]
+    return int(colorsys.rgb_to_hls(*[i/255 for i in pixel[:3]])[2]*255)
 
 @functools.cache
 def min_value(pixel):
