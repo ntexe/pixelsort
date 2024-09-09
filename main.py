@@ -323,8 +323,8 @@ class PixelSort:
         sin_alpha = math.sin(math.radians(angle%90))
         sin_beta = math.sin(math.radians(90-(angle%90)))
 
-        x1 = int(self.img_size[(angle//90)%2]*sin_beta)
-        y1 = int(self.img_size[(angle//90)%2]*sin_alpha)
+        x1 = round(self.img_size[(angle//90)%2]*sin_beta)
+        y1 = round(self.img_size[(angle//90)%2]*sin_alpha)
         x2 = rimg_size[0]-x1
         y2 = rimg_size[1]-y1
 
@@ -338,8 +338,8 @@ class PixelSort:
             full_row = self.image_data[yoffset:yoffset+rimg_size[0]]
 
             if angle % 90 != 0:
-                start_x = max(x1-int((y/sin_alpha)*sin_beta), x2-int(((rimg_size[1]-y)/sin_beta)*sin_alpha))
-                end_x = min(x1+int((y/sin_beta)*sin_alpha), x2+int(((rimg_size[1]-y)/sin_alpha)*sin_beta))
+                start_x = max(x1-round((y/sin_alpha)*sin_beta), x2-round(((rimg_size[1]-y)/sin_beta)*sin_alpha))
+                end_x = min(x1+round((y/sin_beta)*sin_alpha), x2+round(((rimg_size[1]-y)/sin_alpha)*sin_beta))
 
             row = full_row[start_x:end_x]
 
@@ -372,17 +372,17 @@ class PixelSort:
 
             if segmentation == "blocky":
                 block_size = int(size*self.img_size[0])
+                offset = 0
 
-                segment_size = int(block_size*(1-(randomness*(random.random()+0.5))))
+                for x in range(0, rimg_size[0], block_size):
+                    last_offset = offset
+                    offset = int(block_size*randomness*(random.random() - 0.5))
 
-                for x in range(segment_size, rimg_size[0]+block_size, block_size):
-                    start = max(x-segment_size, start_x+1)
-                    end = min(x, end_x-2)
+                    start = max(x+last_offset, start_x)
+                    end = min(x+block_size+offset, end_x)
                     full_row[start:end] = sorted(full_row[start:end],
                                                  key=skey,
                                                  reverse=(y//block_size)%2 != self.reverse)
-
-                    segment_size = int(block_size*(1-(randomness*(random.random()+0.5))))
 
             if segmentation in ("none", "edge", "melting"):
                 self.image_data[yoffset+start_x:yoffset+end_x] = row
