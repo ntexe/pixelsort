@@ -47,7 +47,7 @@ Random values are used to determine segments. Use -sz argument to adjust size of
 #### Blocky
 This segmentation looks like "melting" segmentation but blocky. Use -sz and -r arguments to adjust size of blocks and randomness of segments' sizes.
 #### Chunky
-Fixed length is used to determine segments. Use -l argument to adjust length.
+Fixed length is used to determine segments. Use -l and -r arguments to adjust length and randomness of segments' sizes.
 
 <br>
 
