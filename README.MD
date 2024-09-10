@@ -24,13 +24,13 @@ options:
   -h, --help        show this help message and exit
   -o output_file    Output image file.
   -f format         Output image format. Available choices: png, jpg, same. Default is same
-  -sg segmentation  Segmentation. Available choices: none, edge, melting, blocky, chunky. Default is edge.
+  -sg segmentation  Segmentation. Available choices: none, edge, melting, chunky, blocky. Default is edge.
   -sk skey_choice   Sorting key. Available choices: hue, lightness, saturation, min_value, max_value, red, green, blue. Default is lightness.
   -t threshold      Threshold for edge detection. Value should be between 0 and 1. Default is 0.1.
   -a angle          Angle to rotate the image before sorting in degrees. Value should be between 0 and 360. Default is 0
   -sa sangle        Angle for second pass. Value should be between 0 and 360. Default is 90.
   -sz size          Size of "melting" or "blocky" segmentation. Value should be between 0 and 1. Default is 0.05
-  -r randomness     Randomness of "blocky" segmentation. Value should be between 0 and 0.5. Default is 0.1
+  -r randomness     Randomness of "blocky" or "chunky" segmentation. Value should be between 0 and 0.5. Default is 0
   -l length         Length of "chunky" segmentation. Value should be a natural value. Default is 10
   -am amount        Amount of images. Value should be a natural value. Default is 1
   --sp              Second pass flag.
@@ -94,14 +94,6 @@ Original
 
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_melting_a45_0001.jpg" width=50%>
 
-`python main.py img.jpg -sg blocky`
-
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_0001.jpg" width=50%>
-
-`python main.py img.jpg -sg blocky -a 45`
-
-<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_a45_0001.jpg" width=50%>
-
 `python main.py img.jpg -sg chunky -l 93`
 
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_chunky_l93_0001.jpg" width=50%>
@@ -113,6 +105,14 @@ Original
 `python main.py img.jpg -sg chunky -l 31 --sp`
 
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_chunky_l31_sp_0001.jpg" width=50%>
+
+`python main.py img.jpg -sg blocky -r 0.1`
+
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_r0.100_0001.jpg" width=50%>
+
+`python main.py img.jpg -sg blocky -a 45 -r 0.1`
+
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_blocky_a45_r0.100_0001.jpg" width=50%>
 
 <br>
 

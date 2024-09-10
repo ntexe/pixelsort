@@ -43,7 +43,7 @@ class PixelSort:
         self.image_data = []
         self.edge_image_data = []
 
-    def main(self):
+    def main(self) -> None:
         """
         Main function in this class.
 
@@ -71,7 +71,7 @@ class PixelSort:
 
         print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
 
-    def parse_args(self):
+    def parse_args(self) -> None:
         """
         Function that parses and processes command line arguments.
 
@@ -142,7 +142,7 @@ class PixelSort:
         if not self.segmentation in ("melting", "blocky"):
             self.size = SIZE_DEFAULT
 
-        if self.segmentation != "blocky":
+        if not self.segmentation in ("blocky", "chunky"):
             self.randomness = RANDOMNESS_DEFAULT
 
         if self.segmentation != "chunky":
@@ -158,7 +158,7 @@ class PixelSort:
         self.r_range =  self.parse_range(str(self.randomness), "randomness",
                                                                  0, 1)
         self.l_range = tuple(map(int, self.parse_range(str(self.length), "length",
-                                                                 0, None)))
+                                                                 1, None)))
 
         if self.amount < 1:
             raise RuntimeError("Amount value is invalid")
@@ -185,11 +185,11 @@ class PixelSort:
         end = float(arg.split(",")[-1])
 
         if minv != None:
-            if (start < minv) or (end < minv):
+            if start < minv or end < minv:
                 raise RuntimeError(f"{arg_name.capitalize()} value is too small.") 
 
         if maxv != None:
-            if (start > maxv) or (end > maxv):
+            if start > maxv or end > maxv:
                 raise RuntimeError(f"{arg_name.capitalize()} value is too big.")
 
         return (start, end)
@@ -208,7 +208,7 @@ class PixelSort:
         """
         return (v[0]*(max(1, max_i-1)-(i-1)) + v[1]*(i-1))/max(1, max_i-1)
 
-    def process_image(self, i: int):
+    def process_image(self, i: int) -> None:
         """
         Function to process image. 
 
@@ -263,7 +263,7 @@ class PixelSort:
         rimg.save(filename, quality=95)
         print(f"saved as {filename}")
 
-    def get_crop_rectangle(self, rimg_size: tuple):
+    def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """
         Function that calculates returns crop rectangle.
 
@@ -285,15 +285,16 @@ class PixelSort:
         Function that generates and returns filename for output image.
 
         Parameters:
-        fn (str):       Input image file name
-        sg (str):       Segmentation
-        skc (str):      Sorting key choice
-        t (float):      Threshold
-        a (int):        Angle
-        sz (float):     Size
-        r (float):      Randomness
-        sa (int):       Second pass angle
-        i (int):        Number of image
+        fn (str):   Input image file name
+        sg (str):   Segmentation
+        skc (str):  Sorting key choice
+        t (float):  Threshold
+        a (int):    Angle
+        sa (int):   Second pass angle
+        sz (float): Size
+        r (float):  Randomness
+        l (int):    Length
+        i (int):    Number of image
 
         Returns:
         filename (str): Output file name
@@ -317,7 +318,8 @@ class PixelSort:
         return filename
 
     def sort_image(self, segmentation: str, skey, threshold: float, angle: int,
-                   size: float, randomness: float, length: int, rimg_size: tuple):
+                   size: float, randomness: float, length: int,
+                   rimg_size: tuple) -> None:
         """
         Function that sorts image.
 
@@ -346,10 +348,16 @@ class PixelSort:
         y2 = rimg_size[1]-y1
 
         if segmentation == "chunky":
+            offset = 0
+
             for x in range(0, rimg_size[0]*rimg_size[1], length):
-                self.image_data[x:x+length] = sorted(self.image_data[x:x+length],
-                                                     key=skey,
-                                                     reverse=self.reverse)
+                last_offset = offset
+                offset = round(length*randomness*(random.random() - 0.5))
+
+                self.image_data[x+last_offset:x+length+offset] = sorted(
+                    self.image_data[x+last_offset:x+length+offset],
+                    key=skey,
+                    reverse=self.reverse)
             return
 
         for y in range(rimg_size[1]):
@@ -385,8 +393,8 @@ class PixelSort:
                         segment_begin = x+1
 
             if segmentation == "melting":
-                width = int(size*self.img_size[0]*(1-(0.5*(random.random()+0.5))))
-                offset = int(size*self.img_size[0]*random.random())
+                width = round(size*self.img_size[0]*(1-(0.5*(random.random()+0.5))))
+                offset = round(size*self.img_size[0]*random.random())
 
                 row[:offset] = sorted(row[:offset], key=skey)
 
@@ -395,12 +403,12 @@ class PixelSort:
                                             reverse=self.reverse)
 
             if segmentation == "blocky":
-                block_size = int(size*self.img_size[0])
+                block_size = round(size*self.img_size[0])
                 offset = 0
 
                 for x in range(0, rimg_size[0], block_size):
                     last_offset = offset
-                    offset = int(block_size*randomness*(random.random() - 0.5))
+                    offset = round(block_size*randomness*(random.random() - 0.5))
 
                     start = max(x+last_offset, start_x)
                     end = min(x+block_size+offset, end_x)
