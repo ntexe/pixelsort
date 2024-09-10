@@ -30,9 +30,10 @@ class PixelSort:
 
         self.t_range, self.threshold = (THRESHOLD_DEFAULT,)*2, THRESHOLD_DEFAULT
         self.a_range, self.angle = (ANGLE_DEFAULT,)*2, ANGLE_DEFAULT
+        self.sa_range, self.sangle = (SANGLE_DEFAULT,)*2, SANGLE_DEFAULT
         self.sz_range, self.size = (SIZE_DEFAULT,)*2, SIZE_DEFAULT
         self.r_range, self.randomness = (RANDOMNESS_DEFAULT,)*2, RANDOMNESS_DEFAULT
-        self.sa_range, self.sangle = (SANGLE_DEFAULT,)*2, SANGLE_DEFAULT
+        self.l_range, self.length = (LENGTH_DEFAULT,)*2, LENGTH_DEFAULT
 
         self.amount = AMOUNT_DEFAULT
 
@@ -99,15 +100,17 @@ class PixelSort:
                                 metavar="threshold")
         arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
                                 help=HELP_ANGLE, metavar="angle")
+        arg_parser.add_argument("-sa", default=SANGLE_DEFAULT, dest="sangle",
+                                help=HELP_SANGLE, metavar="sangle")
         arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
                                 help=HELP_SIZE, metavar="size")
         arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
                                 dest="randomness", help=HELP_RANDOMNESS,
                                 metavar="randomness")
+        arg_parser.add_argument("-l", default=LENGTH_DEFAULT, dest="length",
+                                help=HELP_LENGTH, metavar="length")
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
-        arg_parser.add_argument("-sa", default=SANGLE_DEFAULT, dest="sangle",
-                                help=HELP_SANGLE, metavar="sangle")
         arg_parser.add_argument("--sp", action="store_true",
                                 dest="second_pass", help=HELP_SECOND_PASS)
         arg_parser.add_argument("--rev", action="store_true", dest="reverse",
@@ -122,15 +125,19 @@ class PixelSort:
         self.skey = skeys[self.skey_choice]
         self.threshold = args.threshold
         self.angle = args.angle
+        self.sangle = args.sangle
         self.size = args.size
         self.randomness = args.randomness
+        self.length = args.length
         self.amount = args.amount
-        self.sangle = args.sangle
         self.second_pass = args.second_pass
         self.reverse = args.reverse
 
         if self.segmentation != "edge":
             self.threshold = THRESHOLD_DEFAULT
+
+        if not self.second_pass:
+            self.sangle = SANGLE_DEFAULT
 
         if not self.segmentation in ("melting", "blocky"):
             self.size = SIZE_DEFAULT
@@ -138,23 +145,25 @@ class PixelSort:
         if self.segmentation != "blocky":
             self.randomness = RANDOMNESS_DEFAULT
 
-        if not self.second_pass:
-            self.sangle = SANGLE_DEFAULT
+        if self.segmentation != "chunky":
+            self.length = LENGTH_DEFAULT
 
         self.t_range =  self.parse_range(str(self.threshold), "threshold",
                                                                  0, 1)
         self.a_range =  tuple(map(int, self.parse_range(str(self.angle), "angle",
                                                                  0, 360)))
+        self.sa_range = tuple(map(int, self.parse_range(str(self.sangle), "sangle",
+                                                                 0, 360)))
         self.sz_range = self.parse_range(str(self.size), "size", 0, 1)
         self.r_range =  self.parse_range(str(self.randomness), "randomness",
                                                                  0, 1)
-        self.sa_range = tuple(map(int, self.parse_range(str(self.sangle), "sangle",
-                                                                 0, 360)))
+        self.l_range = tuple(map(int, self.parse_range(str(self.length), "length",
+                                                                 0, None)))
 
         if self.amount < 1:
             raise RuntimeError("Amount value is invalid")
 
-    def parse_range(self, arg: str, arg_name: str, minv: float, maxv: float) -> tuple:
+    def parse_range(self, arg: str, arg_name: str, minv: float=None, maxv: float=None) -> tuple:
         """
         Function that parses string with two comma-separated values and checks
         if these values match the following expression: minv <= x <= maxv. If
@@ -175,8 +184,13 @@ class PixelSort:
         start = float(arg.split(",")[0])
         end = float(arg.split(",")[-1])
 
-        if (not minv <= start <= maxv) or (not minv <= end <= maxv):
-            raise RuntimeError(f"{arg_name.capitalize()} value is invalid.")
+        if minv != None:
+            if (start < minv) or (end < minv):
+                raise RuntimeError(f"{arg_name.capitalize()} value is too small.") 
+
+        if maxv != None:
+            if (start > maxv) or (end > maxv):
+                raise RuntimeError(f"{arg_name.capitalize()} value is too big.")
 
         return (start, end)
 
@@ -206,10 +220,11 @@ class PixelSort:
         """
 
         threshold =  round(self.get_balance(self.t_range, i, self.amount), 3)
-        angle =        int(self.get_balance(self.a_range, i, self.amount))
+        angle =      round(self.get_balance(self.a_range, i, self.amount))
+        sangle =     round(self.get_balance(self.sa_range, i, self.amount))
         size =       round(self.get_balance(self.sz_range, i, self.amount), 3)
         randomness = round(self.get_balance(self.r_range, i, self.amount), 3)
-        sangle =       int(self.get_balance(self.sa_range, i, self.amount))
+        length =     round(self.get_balance(self.l_range, i, self.amount))
 
         print(f"image {i}/{self.amount}")
         rimg = self.img.rotate(angle, expand=True)
@@ -220,7 +235,7 @@ class PixelSort:
         print("sorting...")
         self.image_data = list(rimg.getdata())
         self.sort_image(self.segmentation, self.skey, threshold, angle, size,
-                        randomness, rimg.size)
+                        randomness, length, rimg.size)
         rimg.putdata(self.image_data)
 
         rimg = rimg.rotate(-angle, expand=True)
@@ -234,7 +249,7 @@ class PixelSort:
                 
             self.image_data = list(rimg.getdata())
             self.sort_image(self.segmentation, self.skey, threshold,
-                            angle+sangle, size, randomness, rimg.size)
+                            angle+sangle, size, randomness, length, rimg.size)
             rimg.putdata(self.image_data)
 
             rimg = rimg.rotate(-(angle+sangle), expand=True)
@@ -243,7 +258,7 @@ class PixelSort:
         print("saving...")
 
         filename = self.generate_filename(self.img_filename, self.segmentation,
-            self.skey_choice, threshold, angle, size, randomness, sangle, i)
+            self.skey_choice, threshold, angle, sangle, size, randomness, length, i)
 
         rimg.save(filename, quality=95)
         print(f"saved as {filename}")
@@ -265,7 +280,7 @@ class PixelSort:
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
     def generate_filename(self, fn: str, sg: str, skc: str, t: float, a: int,
-                          sz: float, r: float, sa: int, i: int) -> str:
+                          sa: int, sz: float, r: float, l:int, i: int) -> str:
         """
         Function that generates and returns filename for output image.
 
@@ -291,9 +306,10 @@ class PixelSort:
         filename += f"_sk_{skc}"   if skc != SKEY_DEFAULT                   else ""
         filename += f"_t{t:.3f}"   if self.threshold != THRESHOLD_DEFAULT   else ""
         filename += f"_a{a}"       if self.angle != ANGLE_DEFAULT           else ""
+        filename += f"_sa{sa}"     if self.sangle != SANGLE_DEFAULT         else ""
         filename += f"_sz{sz:.3f}" if self.size != SIZE_DEFAULT             else ""
         filename += f"_r{r:.3f}"   if self.randomness != RANDOMNESS_DEFAULT else ""
-        filename += f"_sa{sa}"     if self.sangle != SANGLE_DEFAULT         else ""
+        filename += f"_l{l}"       if self.length != LENGTH_DEFAULT         else ""
         filename += "_sp"          if self.second_pass                      else ""
         filename += "_rev"         if self.reverse                          else ""
         filename += f"_{i:04}"
@@ -301,7 +317,7 @@ class PixelSort:
         return filename
 
     def sort_image(self, segmentation: str, skey, threshold: float, angle: int,
-                   size: float, randomness: float, rimg_size: tuple):
+                   size: float, randomness: float, length: int, rimg_size: tuple):
         """
         Function that sorts image.
 
@@ -312,6 +328,7 @@ class PixelSort:
         angle (int):        Angle
         size (float):       Size
         randomness (float): Randomness
+        length (int):       Length
         rimg_size (tuple):  Processed image size
 
         Returns:
@@ -327,6 +344,13 @@ class PixelSort:
         y1 = round(self.img_size[(angle//90)%2]*sin_alpha)
         x2 = rimg_size[0]-x1
         y2 = rimg_size[1]-y1
+
+        if segmentation == "chunky":
+            for x in range(0, rimg_size[0]*rimg_size[1], length):
+                self.image_data[x:x+length] = sorted(self.image_data[x:x+length],
+                                                     key=skey,
+                                                     reverse=self.reverse)
+            return
 
         for y in range(rimg_size[1]):
             # search for alpha pixels
