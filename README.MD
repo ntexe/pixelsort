@@ -110,6 +110,10 @@ Original
 
 <img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_chunky_l93_sp_0001.jpg" width=50%>
 
+`python main.py img.jpg -sg chunky -l 31 --sp`
+
+<img src="https://raw.githubusercontent.com/ntexe/pixelsort/main/examples/img_sg_chunky_l31_sp_0001.jpg" width=50%>
+
 <br>
 
 Tested on:
