@@ -342,8 +342,8 @@ class PixelSort:
         sin_alpha = math.sin(math.radians(angle%90))
         sin_beta = math.sin(math.radians(90-(angle%90)))
 
-        x1 = round(self.img_size[(angle//90)%2]*sin_beta)
-        y1 = round(self.img_size[(angle//90)%2]*sin_alpha)
+        x1 = self.img_size[(angle//90)%2]*sin_beta
+        y1 = self.img_size[(angle//90)%2]*sin_alpha
         x2 = rimg_size[0]-x1
         y2 = rimg_size[1]-y1
 
@@ -370,8 +370,8 @@ class PixelSort:
             full_row = self.image_data[yoffset:yoffset+rimg_size[0]]
 
             if angle % 90 != 0:
-                start_x = max(x1-round((y/sin_alpha)*sin_beta), x2-round(((rimg_size[1]-y)/sin_beta)*sin_alpha))
-                end_x = min(x1+round((y/sin_beta)*sin_alpha), x2+round(((rimg_size[1]-y)/sin_alpha)*sin_beta))
+                start_x = round(max(x1-(y/sin_alpha)*sin_beta, x2-((rimg_size[1]-y)/sin_beta)*sin_alpha))
+                end_x = round(min(x1+(y/sin_beta)*sin_alpha, x2+((rimg_size[1]-y)/sin_alpha)*sin_beta))
 
             row = full_row[start_x:end_x]
 
@@ -393,33 +393,39 @@ class PixelSort:
                         segment_begin = x+1
 
             if segmentation == "melting":
-                width = round(size*self.img_size[0]*(1-(0.5*(random.random()+0.5))))
-                offset = round(size*self.img_size[0]*random.random())
+                width = size*self.img_size[0]*(1-(0.5*(random.random()+0.5)))
 
-                row[:offset] = sorted(row[:offset], key=skey)
+                x = 0
+                while x < len(row):
+                    last_x = round(x)
+                    x += width*random.random() if x == 0 else width
 
-                for x in range(offset, len(row), width):
-                    row[x:x+width] = sorted(row[x:x+width], key=skey,
+                    row[last_x:round(x)] = sorted(row[last_x:round(x)], key=skey,
                                             reverse=self.reverse)
 
             if segmentation == "blocky":
-                block_size = round(size*self.img_size[0])
-                offset = 0
+                block_size = size*self.img_size[0]
+                offset = round(block_size*randomness*(random.random() - 0.5))
 
-                for x in range(0, rimg_size[0], block_size):
-                    last_offset = offset
-                    offset = round(block_size*randomness*(random.random() - 0.5))
+                x = 0
+                while x < end_x:
+                    last_x = max(round(x)-start_x, 0)
 
-                    start = max(x+last_offset, start_x)
-                    end = min(x+block_size+offset, end_x)
-                    full_row[start:end] = sorted(full_row[start:end],
-                                                 key=skey,
-                                                 reverse=(y//block_size)%2 != self.reverse)
+                    if round(x) > end_x:
+                        break
 
-            if segmentation in ("none", "edge", "melting"):
-                self.image_data[yoffset+start_x:yoffset+end_x] = row
-            else:
-                self.image_data[yoffset:yoffset+rimg_size[0]] = full_row
+                    x += block_size + (offset if x==0 else 0)
+
+                    if max(0, end_x-x) <= -offset+1:
+                        x += -offset
+
+                    if round(x) < start_x:
+                        continue
+
+                    row[last_x:round(x)-start_x] = sorted(row[last_x:round(x)-start_x], key=skey,
+                                            reverse=(y//block_size)%2 != self.reverse)
+            
+            self.image_data[yoffset+start_x:yoffset+end_x] = row
 
 if __name__ == "__main__":
     app = PixelSort()
