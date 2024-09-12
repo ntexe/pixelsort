@@ -148,6 +148,10 @@ class PixelSort:
         if self.segmentation != "chunky":
             self.length = LENGTH_DEFAULT
 
+        if self.segmentation == "chunky":
+            self.angle = ANGLE_DEFAULT
+            self.sangle = SANGLE_DEFAULT
+
         self.t_range =  self.parse_range(str(self.threshold), "threshold",
                                                                  0, 1)
         self.a_range =  tuple(map(int, self.parse_range(str(self.angle), "angle",
