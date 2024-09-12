@@ -64,7 +64,9 @@ Pixels in segments are sorted by value of red, green or blue color.
 ### Second pass flag
 You can set the "--sp" flag to "second pass" the image. After the first pass image is rotated by angle specified in "-sa" argument (90 by default), the tool does second pass and rotates image back to normal.
 
-## Animation
+<br>
+
+### Animation
 You can pass two comma-separated values to threshold, angle, second pass angle, size, randomness and length. If amount is greater than 1, value of parameters will range from first to second value.
 Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with angle parameter 0, 22 and 45.
 
