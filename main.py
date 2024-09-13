@@ -399,23 +399,22 @@ class PixelSort:
                 block_size = size*self.img_size[0]
                 offset = round(block_size*randomness*(random.random() - 0.5))
 
-                x = 0
+                x = (start_x//block_size)*block_size
+                first_iter = True
+
                 while x < end_x:
                     last_x = max(round(x)-start_x, 0)
 
-                    if round(x) > end_x:
-                        break
-
-                    x += block_size + (offset if x==0 else 0)
+                    x += block_size + offset * first_iter
+                    x = max(x, start_x)
 
                     if max(0, end_x-x) <= -offset+1:
-                        x += -offset
-
-                    if round(x) < start_x:
-                        continue
+                        x -= offset
 
                     row[last_x:round(x)-start_x] = sorted(row[last_x:round(x)-start_x], key=skey,
                                             reverse=(y//block_size)%2 != self.reverse)
+
+                    first_iter = False
 
             if segmentation == "chunky":
                 offset = 0
