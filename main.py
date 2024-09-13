@@ -148,10 +148,6 @@ class PixelSort:
         if self.segmentation != "chunky":
             self.length = LENGTH_DEFAULT
 
-        if self.segmentation == "chunky":
-            self.angle = ANGLE_DEFAULT
-            self.sangle = SANGLE_DEFAULT
-
         self.t_range =  self.parse_range(str(self.threshold), "threshold",
                                                                  0, 1)
         self.a_range =  tuple(map(int, self.parse_range(str(self.angle), "angle",
@@ -351,18 +347,7 @@ class PixelSort:
         x2 = rimg_size[0]-x1
         y2 = rimg_size[1]-y1
 
-        if segmentation == "chunky":
-            offset = 0
-
-            for x in range(0, rimg_size[0]*rimg_size[1], length):
-                last_offset = offset
-                offset = round(length*randomness*(random.random() - 0.5))
-
-                self.image_data[x+last_offset:x+length+offset] = sorted(
-                    self.image_data[x+last_offset:x+length+offset],
-                    key=skey,
-                    reverse=self.reverse)
-            return
+        chunky_offset = 0
 
         for y in range(rimg_size[1]):
             # search for alpha pixels
@@ -378,6 +363,9 @@ class PixelSort:
                 end_x = round(min(x1+(y/sin_beta)*sin_alpha, x2+((rimg_size[1]-y)/sin_alpha)*sin_beta))
 
             row = full_row[start_x:end_x]
+
+            if len(row) < 2:
+                continue
 
             if segmentation == "none":
                 row.sort(key=skey, reverse=self.reverse)
@@ -428,6 +416,22 @@ class PixelSort:
 
                     row[last_x:round(x)-start_x] = sorted(row[last_x:round(x)-start_x], key=skey,
                                             reverse=(y//block_size)%2 != self.reverse)
+
+            if segmentation == "chunky":
+                offset = 0
+                x = -(length-chunky_offset)
+
+                while x < len(row):
+                    last_offset = offset
+                    offset = round(length*randomness*(random.random() - 0.5))
+
+                    last_x = max(x, 0)
+                    x += length
+
+                    row[last_x+last_offset:x+offset] = sorted(row[last_x+last_offset:x+offset], key=skey,
+                                            reverse=self.reverse)
+
+                chunky_offset = (((((len(row) - chunky_offset) // length)+1) * length) + chunky_offset) % len(row)
             
             self.image_data[yoffset+start_x:yoffset+end_x] = row
 
