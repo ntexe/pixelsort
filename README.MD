@@ -11,8 +11,11 @@ pip install Pillow
 
 ## Usage
 ```
-usage: main.py [-h] [-o output_file] [-f format] [-sg segmentation] [-sk skey_choice] [-t threshold] [-a angle] [-sa sangle] [-sz size] [-r randomness]
-               [-l length] [-am amount] [--sp] [--rev]
+usage: main.py [-h] [-o output_file] [-f format] [-sg segmentation]
+               [-sk skey_choice] [-t threshold] [-a angle]
+               [-sa sangle] [-sz size] [-r randomness] [-l length]
+               [-sc scale] [-w width] [-hg height] [-am amount] [--sp]
+               [--rev]
                input_file
 
 PixelSort is a python tool for sorting pixels in images.
@@ -23,16 +26,37 @@ positional arguments:
 options:
   -h, --help        show this help message and exit
   -o output_file    Output image file.
-  -f format         Output image format. Available choices: png, jpg, same. Default is same
-  -sg segmentation  Segmentation. Available choices: none, edge, melting, chunky, blocky. Default is edge.
-  -sk skey_choice   Sorting key. Available choices: hue, lightness, saturation, min_value, max_value, red, green, blue. Default is lightness.
-  -t threshold      Threshold for edge detection. Value should be between 0 and 1. Default is 0.1.
-  -a angle          Angle to rotate the image before sorting in degrees. Value should be between 0 and 360. Default is 0
-  -sa sangle        Angle for second pass. Value should be between 0 and 360. Default is 90.
-  -sz size          Size of "melting" or "blocky" segmentation. Value should be between 0 and 1. Default is 0.05
-  -r randomness     Randomness of "blocky" or "chunky" segmentation. Value should be between 0 and 0.5. Default is 0
-  -l length         Length of "chunky" segmentation. Value should be a natural value. Default is 10
-  -am amount        Amount of images. Value should be a natural value. Default is 1
+  -f format         Output image format. Available choices: png, jpg,
+                    same. Default is same.
+  -sg segmentation  Segmentation. Available choices: none, edge,
+                    melting, chunky, blocky. Default is edge.
+  -sk skey_choice   Sorting key. Available choices: hue, lightness,
+                    saturation, min_value, max_value, red, green,
+                    blue. Default is lightness.
+  -t threshold      Threshold for edge detection. Value should be
+                    between 0 and 1. Default is 0.1.
+  -a angle          Angle to rotate the image before sorting in
+                    degrees. Value should be between 0 and 360.
+                    Default is 0.
+  -sa sangle        Angle for second pass. Value should be between 0
+                    and 360. Default is 90.
+  -sz size          Size of "melting" or "blocky" segmentation. Value
+                    should be between 0 and 1. Default is 0.05.
+  -r randomness     Randomness of "blocky" or "chunky" segmentation.
+                    Value should be between 0 and 0.5. Default is 0.
+  -l length         Length of "chunky" segmentation. Value should be a
+                    natural value. Default is 10.
+  -sc scale         Rescale image before sorting. If width or height
+                    are non-zero this value will be ignored. Value
+                    should be between 0.01 and 10. Default is 1.
+  -w width          Resize to width before sorting. Value should be
+                    greater than -1. If value is zero, width is
+                    calculated automatically. Default is 0.
+  -hg height        Resize to height before sorting. Value should be
+                    greater than -1. If value is zero, height is
+                    calculated automatically. Default is 0.
+  -am amount        Amount of images. Value should be a natural value.
+                    Default is 1.
   --sp              Second pass flag.
   --rev             Reverse sort flag.
 ```
@@ -65,7 +89,7 @@ Pixels in segments are sorted by value of red, green or blue color.
 You can set the "--sp" flag to "second pass" the image. After the first pass image is rotated by angle specified in "-sa" argument (90 by default), the tool does second pass and rotates image back to normal.
 
 ### Animation
-You can pass two comma-separated values to threshold, angle, second pass angle, size, randomness and length. If amount is greater than 1, value of parameters will range from first to second value.
+You can pass two comma-separated values to threshold, angle, second pass angle, size, randomness, length, scale, width and height. If amount is greater than 1, value of parameters will range from first to second value.
 Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with angle parameter 0, 22 and 45.
 
 <br>

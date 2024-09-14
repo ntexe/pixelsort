@@ -35,6 +35,10 @@ class PixelSort:
         self.r_range, self.randomness = (RANDOMNESS_DEFAULT,)*2, RANDOMNESS_DEFAULT
         self.l_range, self.length = (LENGTH_DEFAULT,)*2, LENGTH_DEFAULT
 
+        self.sc_range, self.scale = (SCALE_DEFAULT,)*2, SCALE_DEFAULT
+        self.w_range, self.width = (WIDTH_DEFAULT,)*2, WIDTH_DEFAULT
+        self.h_range, self.height = (HEIGHT_DEFAULT,)*2, HEIGHT_DEFAULT
+
         self.amount = AMOUNT_DEFAULT
 
         self.img_size = [0,0]
@@ -60,7 +64,6 @@ class PixelSort:
         img = Image.open(self.input_file)
 
         self.img_filename = os.path.basename(os.path.realpath(img.filename))
-        self.img_size = img.size
 
         self.img = img.convert("RGB")
 
@@ -82,12 +85,14 @@ class PixelSort:
         None
         """
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
+
         arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
         arg_parser.add_argument("-o", default=None, dest="output_file",
                                 help=HELP_OUTPUT, metavar="output_file")
         arg_parser.add_argument("-f", choices=FORMAT_CHOICES,
                                 default=FORMAT_DEFAULT, dest="format",
                                 help=HELP_FORMAT, metavar="format")
+
         arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
                                 default=SEGMENTATION_DEFAULT,
                                 dest="segmentation", help=HELP_SEGMENTATION,
@@ -95,6 +100,7 @@ class PixelSort:
         arg_parser.add_argument("-sk", choices=SKEY_CHOICES,
                                 default=SKEY_DEFAULT, dest="skey_choice",
                                 help=HELP_SKEY, metavar="skey_choice")
+
         arg_parser.add_argument("-t", default=THRESHOLD_DEFAULT,
                                 dest="threshold", help=HELP_THRESHOLD,
                                 metavar="threshold")
@@ -109,6 +115,14 @@ class PixelSort:
                                 metavar="randomness")
         arg_parser.add_argument("-l", default=LENGTH_DEFAULT, dest="length",
                                 help=HELP_LENGTH, metavar="length")
+
+        arg_parser.add_argument("-sc", default=SCALE_DEFAULT, dest="scale",
+                                help=HELP_SCALE, metavar="scale")
+        arg_parser.add_argument("-w", default=WIDTH_DEFAULT, dest="width",
+                                help=HELP_WIDTH, metavar="width")
+        arg_parser.add_argument("-hg", default=HEIGHT_DEFAULT, dest="height",
+                                help=HELP_HEIGHT, metavar="height")
+
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
         arg_parser.add_argument("--sp", action="store_true",
@@ -117,18 +131,26 @@ class PixelSort:
                                 help=HELP_REVERSE)
 
         args = arg_parser.parse_args()
+
         self.input_file = args.input_file
         self.output_file = args.output_file
         self.format = args.format
+
         self.segmentation = args.segmentation
         self.skey_choice = args.skey_choice
         self.skey = skeys[self.skey_choice]
+
         self.threshold = args.threshold
         self.angle = args.angle
         self.sangle = args.sangle
         self.size = args.size
         self.randomness = args.randomness
         self.length = args.length
+
+        self.scale = args.scale
+        self.width = args.width
+        self.height = args.height
+
         self.amount = args.amount
         self.second_pass = args.second_pass
         self.reverse = args.reverse
@@ -148,17 +170,26 @@ class PixelSort:
         if self.segmentation != "chunky":
             self.length = LENGTH_DEFAULT
 
+        if str(self.width) != "0" or str(self.height) != "0":
+            self.scale = SCALE_DEFAULT
+
         self.t_range =  self.parse_range(str(self.threshold), "threshold",
-                                                                 0, 1)
+                                                                   0, 1)
         self.a_range =  tuple(map(int, self.parse_range(str(self.angle), "angle",
-                                                                 0, 360)))
+                                                                   0, 360)))
         self.sa_range = tuple(map(int, self.parse_range(str(self.sangle), "sangle",
-                                                                 0, 360)))
-        self.sz_range = self.parse_range(str(self.size), "size", 0, 1)
+                                                                   0, 360)))
+        self.sz_range = self.parse_range(str(self.size), "size",   0, 1)
         self.r_range =  self.parse_range(str(self.randomness), "randomness",
-                                                                 0, 1)
+                                                                   0, 1)
         self.l_range = tuple(map(int, self.parse_range(str(self.length), "length",
-                                                                 1, None)))
+                                                                   1, None)))
+
+        self.sc_range = self.parse_range(str(self.scale), "scale", 0.01, 10)
+        self.w_range =  tuple(map(int, self.parse_range(str(self.width), "width",
+                                                                   0, None)))
+        self.h_range =  tuple(map(int, self.parse_range(str(self.height), "height",
+                                                                   0, None)))
 
         if self.amount < 1:
             raise RuntimeError("Amount value is invalid")
@@ -208,6 +239,41 @@ class PixelSort:
         """
         return (v[0]*(max(1, max_i-1)-(i-1)) + v[1]*(i-1))/max(1, max_i-1)
 
+    def calc_dims(self, dims:tuple, scale: float, arg_dims: tuple) -> tuple:
+        """
+        Function to calculate dimensions of new image.
+
+        Parameters:
+        dims (tuple):     Tuple of original dimensions
+        scale (float):    Scale argument
+        arg_dims (tuple): Tuple of width and height arguments
+
+        Returns:
+        tuple:            Tuple of new dimensions
+        """
+
+        new_width, new_height = dims
+
+        if arg_dims[1] != 0 or arg_dims[0] != 0:
+            if arg_dims[0] != 0:
+                new_width = arg_dims[0]
+
+                if arg_dims[1] == 0:
+                    new_height = round((dims[1] / dims[0]) * arg_dims[0])
+
+            if arg_dims[1] != 0:
+                new_height = arg_dims[1]
+
+                if arg_dims[0] == 0:
+                    new_width = round((dims[0] / dims[1]) * arg_dims[1])
+
+            return (new_width, new_height)
+
+        if scale != 1:
+            new_width, new_height = round(dims[0]*scale), round(dims[1]*scale)
+
+        return (new_width, new_height)
+
     def process_image(self, i: int) -> None:
         """
         Function to process image. 
@@ -219,16 +285,28 @@ class PixelSort:
         None
         """
 
-        threshold =  round(self.get_balance(self.t_range, i, self.amount), 3)
-        angle =      round(self.get_balance(self.a_range, i, self.amount))
-        sangle =     round(self.get_balance(self.sa_range, i, self.amount))
+        threshold =  round(self.get_balance(self.t_range,  i, self.amount), 3)
+        angle =      round(self.get_balance(self.a_range,  i, self.amount)   )
+        sangle =     round(self.get_balance(self.sa_range, i, self.amount)   )
         size =       round(self.get_balance(self.sz_range, i, self.amount), 3)
-        randomness = round(self.get_balance(self.r_range, i, self.amount), 3)
-        length =     round(self.get_balance(self.l_range, i, self.amount))
+        randomness = round(self.get_balance(self.r_range,  i, self.amount), 3)
+        length =     round(self.get_balance(self.l_range,  i, self.amount)   )
+
+        scale =      round(self.get_balance(self.sc_range, i, self.amount), 3)
+        width =      round(self.get_balance(self.w_range,  i, self.amount)   )
+        height =     round(self.get_balance(self.h_range,  i, self.amount)   )
 
         print(f"image {i}/{self.amount}")
-        rimg = self.img.rotate(angle, expand=True)
 
+        # resize
+        new_dims = self.calc_dims(self.img.size, scale, (width,height))
+        rimg = self.img.resize(new_dims)
+        self.img_size = new_dims
+
+        # rotate
+        rimg = rimg.rotate(angle, expand=True)
+
+        # edge detection
         if self.segmentation == "edge":
             self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
 
@@ -258,7 +336,8 @@ class PixelSort:
         print("saving...")
 
         filename = self.generate_filename(self.img_filename, self.segmentation,
-            self.skey_choice, threshold, angle, sangle, size, randomness, length, i)
+            self.skey_choice, threshold, angle, sangle, size, randomness,
+            length, scale, width, height, i)
 
         rimg.save(filename, quality=95)
         print(f"saved as {filename}")
@@ -280,7 +359,8 @@ class PixelSort:
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
     def generate_filename(self, fn: str, sg: str, skc: str, t: float, a: int,
-                          sa: int, sz: float, r: float, l:int, i: int) -> str:
+                          sa: int, sz: float, r: float, l:int, sc:float,
+                          w:int, hg:int, i: int) -> str:
         """
         Function that generates and returns filename for output image.
 
@@ -311,6 +391,9 @@ class PixelSort:
         filename += f"_sz{sz:.3f}" if self.size != SIZE_DEFAULT             else ""
         filename += f"_r{r:.3f}"   if self.randomness != RANDOMNESS_DEFAULT else ""
         filename += f"_l{l}"       if self.length != LENGTH_DEFAULT         else ""
+        filename += f"_sc{sc:.3f}" if self.scale != SCALE_DEFAULT           else ""
+        filename += f"_w{w}"       if self.width != WIDTH_DEFAULT           else ""
+        filename += f"_hg{hg}"     if self.height != HEIGHT_DEFAULT         else ""
         filename += "_sp"          if self.second_pass                      else ""
         filename += "_rev"         if self.reverse                          else ""
         filename += f"_{i:04}"
@@ -350,7 +433,6 @@ class PixelSort:
         chunky_offset = 0
 
         for y in range(rimg_size[1]):
-            # search for alpha pixels
             start_x = 0
             end_x = rimg_size[0]
 
@@ -376,7 +458,7 @@ class PixelSort:
                 edge_row = self.edge_image_data[yoffset+start_x:yoffset+end_x]
 
                 for x in range(len(row)):
-                    if pixel_utils.lightness(edge_row[x]) > threshold:
+                    if pixel_utils.lightness(edge_row[x])/255 > threshold:
                         if x - segment_begin > 1:
                             row[segment_begin:x] = sorted(
                                         row[segment_begin:x], key=skey,
