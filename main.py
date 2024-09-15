@@ -1,4 +1,5 @@
 import argparse
+import logging
 import math
 import os
 import time
@@ -22,6 +23,11 @@ skeys = {
 
 class PixelSort:
     def __init__(self):
+        self.logger = None
+
+        self.file_loglevel = logging.DEBUG
+        self.stream_loglevel = logging.INFO
+
         self.input_file = None
 
         self.segmentation = SEGMENTATION_DEFAULT
@@ -57,14 +63,15 @@ class PixelSort:
         Returns:
         None
         """
+        self.setup_logging()
         self.parse_args()
 
-        print("opening picture...")
+        self.img_filename = os.path.basename(os.path.realpath(self.input_file))
+        self.logger.info(f"Opening image {self.img_filename}...")
 
         img = Image.open(self.input_file)
 
-        self.img_filename = os.path.basename(os.path.realpath(img.filename))
-
+        self.logger.debug("Converting image to RGB...")
         self.img = img.convert("RGB")
 
         start_time = time.monotonic()
@@ -72,7 +79,24 @@ class PixelSort:
         for i in range(1, self.amount+1):
             self.process_image(i)
 
-        print(f"finished in {time.monotonic()-start_time:.2f} seconds.")
+        self.logger.info(f"Done in {time.monotonic()-start_time:.2f} seconds.")
+
+    def setup_logging(self):
+        self.logger = logging.getLogger("pixelsort")
+        self.logger.setLevel(logging.DEBUG)
+
+        file_handler = logging.FileHandler(f"{int(time.time())}.log")
+        file_handler.setLevel(self.file_loglevel)
+
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(self.stream_loglevel)
+
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        stream_handler.setFormatter(formatter)
+
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(stream_handler)
 
     def parse_args(self) -> None:
         """
@@ -130,6 +154,7 @@ class PixelSort:
         arg_parser.add_argument("--rev", action="store_true", dest="reverse",
                                 help=HELP_REVERSE)
 
+        self.logger.debug("Parsing args...")
         args = arg_parser.parse_args()
 
         self.input_file = args.input_file
@@ -191,8 +216,33 @@ class PixelSort:
         self.h_range =  tuple(map(int, self.parse_range(str(self.height), "height",
                                                                    0, None)))
 
+        self.logger.debug("Arg parsing done.")
+
         if self.amount < 1:
-            raise RuntimeError("Amount value is invalid")
+            self.logger.warning(f"Amount value is invalid, will use {AMOUNT_DEFAULT} (default).")
+            self.amount = AMOUNT_DEFAULT
+
+        # it is temporary, we need store ranges in dictionary
+
+        self.logger.debug(f"self.input_file = {self.input_file}")
+        self.logger.debug(f"self.output_file = {self.output_file}")
+        self.logger.debug(f"self.format = {self.format}")
+        self.logger.debug(f"self.segmentation = {self.segmentation}")
+        self.logger.debug(f"self.skey_choice = {self.skey_choice}")
+
+        self.logger.debug(f"self.t_range = {self.t_range}")
+        self.logger.debug(f"self.a_range = {self.a_range}")
+        self.logger.debug(f"self.sa_range = {self.sa_range}")
+        self.logger.debug(f"self.sz_range = {self.sz_range}")
+        self.logger.debug(f"self.r_range = {self.r_range}")
+        self.logger.debug(f"self.l_range = {self.l_range}")
+        self.logger.debug(f"self.sc_range = {self.sc_range}")
+        self.logger.debug(f"self.w_range = {self.w_range}")
+        self.logger.debug(f"self.h_range = {self.h_range}")
+
+        self.logger.debug(f"self.amount = {self.amount}")
+        self.logger.debug(f"self.second_pass = {self.second_pass}")
+        self.logger.debug(f"self.reverse = {self.reverse}")
 
     def parse_range(self, arg: str, arg_name: str, minv: float=None, maxv: float=None) -> tuple:
         """
@@ -209,6 +259,9 @@ class PixelSort:
         Returns:
         tuple:          Tuple with two float values
         """
+
+        # TODO: instead of runtimeerror just warn and set the value to default
+
         if len(arg.split(",")) > 2:
             raise RuntimeError(f"Too many values in {arg_name} argument.")
 
@@ -285,6 +338,10 @@ class PixelSort:
         None
         """
 
+        self.logger.info(f"Preparing image {i}/{self.amount}...")
+
+        self.logger.debug("Calculating parameters...")
+
         threshold =  round(self.get_balance(self.t_range,  i, self.amount), 3)
         angle =      round(self.get_balance(self.a_range,  i, self.amount)   )
         sangle =     round(self.get_balance(self.sa_range, i, self.amount)   )
@@ -296,51 +353,70 @@ class PixelSort:
         width =      round(self.get_balance(self.w_range,  i, self.amount)   )
         height =     round(self.get_balance(self.h_range,  i, self.amount)   )
 
-        print(f"image {i}/{self.amount}")
+        self.logger.debug(f"threshold = {threshold}")
+        self.logger.debug(f"angle = {angle}")
+        self.logger.debug(f"sangle = {sangle}")
+        self.logger.debug(f"size = {size}")
+        self.logger.debug(f"randomness = {randomness}")
+        self.logger.debug(f"length = {length}")
+        self.logger.debug(f"scale = {scale}")
+        self.logger.debug(f"width = {width}")
+        self.logger.debug(f"height = {height}")
 
         # resize
         new_dims = self.calc_dims(self.img.size, scale, (width,height))
+        self.logger.debug(f"Resizing image to {new_dims[0]}x{new_dims[1]}...")
         rimg = self.img.resize(new_dims)
         self.img_size = new_dims
 
         # rotate
+        self.logger.debug(f"Rotating image by {angle} degrees...")
         rimg = rimg.rotate(angle, expand=True)
 
         # edge detection
         if self.segmentation == "edge":
+            self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
             self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
 
-        print("sorting...")
+        self.logger.info("Sorting image...")
         self.image_data = list(rimg.getdata())
         self.sort_image(self.segmentation, self.skey, threshold, angle, size,
                         randomness, length, rimg.size)
         rimg.putdata(self.image_data)
+        self.logger.debug("First pass sorting done." if self.second_pass else "Sorting done.")
 
+        self.logger.debug(f"Rotating image by {-angle} degrees...")
         rimg = rimg.rotate(-angle, expand=True)
         rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
         if self.second_pass:
+            self.logger.info("Second pass preparing...")
+            self.logger.debug(f"Rotating image by {angle+sangle} degrees...")
             rimg = rimg.rotate(angle+sangle, expand=True)
 
             if self.segmentation == "edge":
+                self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
                 self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
-                
+            
+            self.logger.info("Second pass sorting...")
             self.image_data = list(rimg.getdata())
             self.sort_image(self.segmentation, self.skey, threshold,
                             angle+sangle, size, randomness, length, rimg.size)
             rimg.putdata(self.image_data)
+            self.logger.debug("Second pass sorting done.")
 
+            self.logger.debug(f"Rotating image by {-(angle+sangle)} degrees...")
             rimg = rimg.rotate(-(angle+sangle), expand=True)
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
-
-        print("saving...")
 
         filename = self.generate_filename(self.img_filename, self.segmentation,
             self.skey_choice, threshold, angle, sangle, size, randomness,
             length, scale, width, height, i)
 
+        self.logger.info(f"Saving to {filename}...")
+
         rimg.save(filename, quality=95)
-        print(f"saved as {filename}")
+        self.logger.info("Saved.")
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """
