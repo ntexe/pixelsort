@@ -21,6 +21,14 @@ skeys = {
     "blue": pixel_utils.blue,
 }
 
+loglevels = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL
+}
+
 class PixelSort:
     def __init__(self):
         self.logger = None
@@ -74,29 +82,39 @@ class PixelSort:
         self.logger.debug("Converting image to RGB...")
         self.img = img.convert("RGB")
 
-        start_time = time.monotonic()
-
         for i in range(1, self.amount+1):
+            start_time = time.monotonic()
             self.process_image(i)
-
-        self.logger.info(f"Done in {time.monotonic()-start_time:.2f} seconds.")
+            self.logger.info(f"Image {i} done in {time.monotonic()-start_time:.2f} seconds.")
 
     def setup_logging(self):
+        """
+        Function that creates and configures self.logger
+
+        Parameters:
+        None
+
+        Return:
+        None
+        """
         self.logger = logging.getLogger("pixelsort")
         self.logger.setLevel(logging.DEBUG)
 
-        file_handler = logging.FileHandler(f"{int(time.time())}.log")
-        file_handler.setLevel(self.file_loglevel)
+        if not os.path.exists(LOG_FOLDER):
+            os.makedirs(LOG_FOLDER)
 
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(self.stream_loglevel)
+        self.file_handler = logging.FileHandler(f"{LOG_FOLDER}/{LOG_FORMAT.format(unix_timestamp=int(time.time()))}", delay=True)
+        self.file_handler.setLevel(self.file_loglevel)
+
+        self.stream_handler = logging.StreamHandler()
+        self.stream_handler.setLevel(self.stream_loglevel)
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(formatter)
-        stream_handler.setFormatter(formatter)
+        self.file_handler.setFormatter(formatter)
+        self.stream_handler.setFormatter(formatter)
 
-        self.logger.addHandler(file_handler)
-        self.logger.addHandler(stream_handler)
+        self.logger.addHandler(self.file_handler)
+        self.logger.addHandler(self.stream_handler)
 
     def parse_args(self) -> None:
         """
@@ -109,6 +127,10 @@ class PixelSort:
         None
         """
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
+
+        arg_parser.add_argument("-ll", choices=LOGLEVEL_CHOICES,
+                                default=LOGLEVEL_DEFAULT,dest="loglevel",
+                                help=HELP_LOGLEVEL, metavar="loglevel")
 
         arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
         arg_parser.add_argument("-o", default=None, dest="output_file",
@@ -149,13 +171,18 @@ class PixelSort:
 
         arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
                                 help=HELP_AMOUNT, metavar="amount", type=int)
+
         arg_parser.add_argument("--sp", action="store_true",
                                 dest="second_pass", help=HELP_SECOND_PASS)
         arg_parser.add_argument("--rev", action="store_true", dest="reverse",
                                 help=HELP_REVERSE)
+        arg_parser.add_argument("--silent", action="store_true", dest="silent",
+                                help=HELP_SILENT)
+        arg_parser.add_argument("--no-log", action="store_true", dest="nolog")
 
-        self.logger.debug("Parsing args...")
         args = arg_parser.parse_args()
+
+        self.loglevel = args.loglevel
 
         self.input_file = args.input_file
         self.output_file = args.output_file
@@ -179,6 +206,15 @@ class PixelSort:
         self.amount = args.amount
         self.second_pass = args.second_pass
         self.reverse = args.reverse
+
+        self.silent = args.silent
+        self.nolog = args.nolog
+
+        self.stream_handler.setLevel(self.loglevel)
+        if self.silent or self.nolog:
+            self.logger.removeHandler(self.stream_handler)
+        if self.nolog:
+            self.logger.removeHandler(self.file_handler)
 
         if self.segmentation != "edge":
             self.threshold = THRESHOLD_DEFAULT
@@ -243,6 +279,8 @@ class PixelSort:
         self.logger.debug(f"self.amount = {self.amount}")
         self.logger.debug(f"self.second_pass = {self.second_pass}")
         self.logger.debug(f"self.reverse = {self.reverse}")
+        self.logger.debug(f"self.silent = {self.reverse}")
+        self.logger.debug(f"self.nolog = {self.nolog}")
 
     def parse_range(self, arg: str, arg_name: str, minv: float=None, maxv: float=None) -> tuple:
         """
@@ -391,6 +429,7 @@ class PixelSort:
 
         if self.second_pass:
             self.logger.info("Second pass preparing...")
+
             self.logger.debug(f"Rotating image by {angle+sangle} degrees...")
             rimg = rimg.rotate(angle+sangle, expand=True)
 
