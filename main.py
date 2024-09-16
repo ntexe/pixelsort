@@ -21,20 +21,9 @@ skeys = {
     "blue": pixel_utils.blue,
 }
 
-loglevels = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL
-}
-
 class PixelSort:
     def __init__(self):
         self.logger = None
-
-        self.file_loglevel = logging.DEBUG
-        self.stream_loglevel = logging.INFO
 
         self.input_file = None
 
@@ -98,16 +87,12 @@ class PixelSort:
         None
         """
         self.logger = logging.getLogger("pixelsort")
-        self.logger.setLevel(logging.DEBUG)
 
         if not os.path.exists(LOG_FOLDER):
             os.makedirs(LOG_FOLDER)
 
         self.file_handler = logging.FileHandler(f"{LOG_FOLDER}/{LOG_FORMAT.format(unix_timestamp=int(time.time()))}", delay=True)
-        self.file_handler.setLevel(self.file_loglevel)
-
         self.stream_handler = logging.StreamHandler()
-        self.stream_handler.setLevel(self.stream_loglevel)
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.file_handler.setFormatter(formatter)
