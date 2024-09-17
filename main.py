@@ -23,9 +23,10 @@ skeys = {
 
 class PixelSort:
     def __init__(self):
+        self.img = None
         self.logger = None
 
-        self.input_file = None
+        self.input_filename = None
 
         self.segmentation = SEGMENTATION_DEFAULT
         self.skey_choice = SKEY_DEFAULT
@@ -46,7 +47,6 @@ class PixelSort:
 
         self.img_size = [0,0]
         self.img_filename = ""
-        self.img = None
         self.image_data = []
         self.edge_image_data = []
 
@@ -63,10 +63,10 @@ class PixelSort:
         self.setup_logging()
         self.parse_args()
 
-        self.img_filename = os.path.basename(os.path.realpath(self.input_file))
+        self.img_filename = os.path.basename(os.path.realpath(self.input_filename))
         self.logger.info(f"Opening image {self.img_filename}...")
 
-        img = Image.open(self.input_file)
+        img = Image.open(self.input_filename)
 
         self.logger.debug("Converting image to RGB...")
         self.img = img.convert("RGB")
@@ -87,6 +87,7 @@ class PixelSort:
         None
         """
         self.logger = logging.getLogger("pixelsort")
+        self.logger.setLevel("DEBUG")
 
         if not os.path.exists(LOG_FOLDER):
             os.makedirs(LOG_FOLDER)
@@ -113,11 +114,11 @@ class PixelSort:
         """
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
 
-        arg_parser.add_argument("-ll", choices=LOGLEVEL_CHOICES,
+        arg_parser.add_argument("-ll", choices=LOGLEVEL_CHOICES+AUX_LL_CHOICES,
                                 default=LOGLEVEL_DEFAULT,dest="loglevel",
                                 help=HELP_LOGLEVEL, metavar="loglevel")
 
-        arg_parser.add_argument("input_file", help=HELP_INPUT_FILE)
+        arg_parser.add_argument("input_filename", help=HELP_INPUT_FILENAME)
         arg_parser.add_argument("-o", default=None, dest="output_file",
                                 help=HELP_OUTPUT, metavar="output_file")
         arg_parser.add_argument("-f", choices=FORMAT_CHOICES,
@@ -169,7 +170,7 @@ class PixelSort:
 
         self.loglevel = args.loglevel
 
-        self.input_file = args.input_file
+        self.input_filename = args.input_filename
         self.output_file = args.output_file
         self.format = args.format
 
@@ -195,7 +196,7 @@ class PixelSort:
         self.silent = args.silent
         self.nolog = args.nolog
 
-        self.stream_handler.setLevel(self.loglevel)
+        self.stream_handler.setLevel(self.loglevel.upper())
         if self.silent or self.nolog:
             self.logger.removeHandler(self.stream_handler)
         if self.nolog:
@@ -245,7 +246,7 @@ class PixelSort:
 
         # it is temporary, we need store ranges in dictionary
 
-        self.logger.debug(f"self.input_file = {self.input_file}")
+        self.logger.debug(f"self.input_filename = {self.input_filename}")
         self.logger.debug(f"self.output_file = {self.output_file}")
         self.logger.debug(f"self.format = {self.format}")
         self.logger.debug(f"self.segmentation = {self.segmentation}")

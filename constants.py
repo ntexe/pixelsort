@@ -2,6 +2,7 @@ LOG_FOLDER = "logs"
 LOG_FORMAT = "{unix_timestamp}.log"
 LOGLEVEL_DEFAULT = "INFO"
 LOGLEVEL_CHOICES = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+AUX_LL_CHOICES = list(map(str.lower, LOGLEVEL_CHOICES))
 
 SEGMENTATION_DEFAULT = "edge"
 SEGMENTATION_CHOICES = ["none", "edge", "melting", "chunky", "blocky"]
@@ -24,8 +25,8 @@ HEIGHT_DEFAULT = 0
 AMOUNT_DEFAULT = 1
 
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
-HELP_LOGLEVEL = f"Log level for command line. Default is {LOGLEVEL_DEFAULT}"
-HELP_INPUT_FILE = "Input image file."
+HELP_LOGLEVEL = f"Log level for command line. Available choices: {LOGLEVEL_CHOICES} (lowercase is also accepted). Default is {LOGLEVEL_DEFAULT}"
+HELP_INPUT_FILENAME = "Input image file name."
 HELP_OUTPUT = "Output image file."
 HELP_FORMAT = f"Output image format. Available choices: {', '.join(FORMAT_CHOICES)}. Default is {FORMAT_DEFAULT}."
 HELP_SEGMENTATION = f"Segmentation. Available choices: {', '.join(SEGMENTATION_CHOICES)}. Default is {SEGMENTATION_DEFAULT}."
