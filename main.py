@@ -26,24 +26,10 @@ class PixelSort:
         self.img = None
         self.logger = None
 
-        self.input_filename = None
+        self.settings = DEFAULTS.copy()
+        self.ranges = RANGE_DEFAULTS.copy()
 
-        self.segmentation = SEGMENTATION_DEFAULT
-        self.skey_choice = SKEY_DEFAULT
-        self.skey = skeys[self.skey_choice]
-
-        self.t_range, self.threshold = (THRESHOLD_DEFAULT,)*2, THRESHOLD_DEFAULT
-        self.a_range, self.angle = (ANGLE_DEFAULT,)*2, ANGLE_DEFAULT
-        self.sa_range, self.sangle = (SANGLE_DEFAULT,)*2, SANGLE_DEFAULT
-        self.sz_range, self.size = (SIZE_DEFAULT,)*2, SIZE_DEFAULT
-        self.r_range, self.randomness = (RANDOMNESS_DEFAULT,)*2, RANDOMNESS_DEFAULT
-        self.l_range, self.length = (LENGTH_DEFAULT,)*2, LENGTH_DEFAULT
-
-        self.sc_range, self.scale = (SCALE_DEFAULT,)*2, SCALE_DEFAULT
-        self.w_range, self.width = (WIDTH_DEFAULT,)*2, WIDTH_DEFAULT
-        self.h_range, self.height = (HEIGHT_DEFAULT,)*2, HEIGHT_DEFAULT
-
-        self.amount = AMOUNT_DEFAULT
+        self.skey = skeys[self.settings["skey_choice"]]
 
         self.img_size = [0,0]
         self.img_filename = ""
@@ -63,15 +49,15 @@ class PixelSort:
         self.setup_logging()
         self.parse_args()
 
-        self.img_filename = os.path.basename(os.path.realpath(self.input_filename))
+        self.img_filename = os.path.basename(os.path.realpath(self.settings["input_filename"]))
         self.logger.info(f"Opening image {self.img_filename}...")
 
-        img = Image.open(self.input_filename)
+        img = Image.open(self.settings["input_filename"])
 
         self.logger.debug("Converting image to RGB...")
         self.img = img.convert("RGB")
 
-        for i in range(1, self.amount+1):
+        for i in range(1, self.settings["amount"]+1):
             start_time = time.monotonic()
             self.process_image(i)
             self.logger.info(f"Image {i} done in {time.monotonic()-start_time:.2f} seconds.")
@@ -118,155 +104,126 @@ class PixelSort:
                                 default=LOGLEVEL_DEFAULT,dest="loglevel",
                                 help=HELP_LOGLEVEL, metavar="loglevel")
 
-        arg_parser.add_argument("input_filename", help=HELP_INPUT_FILENAME)
-        arg_parser.add_argument("-o", default=None, dest="output_file",
-                                help=HELP_OUTPUT, metavar="output_file")
+        arg_parser.add_argument("input_path", help=HELP_INPUT_PATH)
+        arg_parser.add_argument("-o", default=DEFAULTS["output_path"],
+                                dest="output_path", help=HELP_OUTPUT_PATH,
+                                metavar="output_path")
         arg_parser.add_argument("-f", choices=FORMAT_CHOICES,
-                                default=FORMAT_DEFAULT, dest="format",
+                                default=DEFAULTS["format"], dest="format",
                                 help=HELP_FORMAT, metavar="format")
 
         arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
-                                default=SEGMENTATION_DEFAULT,
+                                default=DEFAULTS["segmentation"],
                                 dest="segmentation", help=HELP_SEGMENTATION,
                                 metavar="segmentation")
-        arg_parser.add_argument("-sk", choices=SKEY_CHOICES,
-                                default=SKEY_DEFAULT, dest="skey_choice",
-                                help=HELP_SKEY, metavar="skey_choice")
+        arg_parser.add_argument("-sk", choices=SKEY_CHOICES, 
+                                default=DEFAULT["skey_choice"],
+                                dest="skey_choice", help=HELP_SKEY,
+                                metavar="skey_choice")
 
-        arg_parser.add_argument("-t", default=THRESHOLD_DEFAULT,
-                                dest="threshold", help=HELP_THRESHOLD,
-                                metavar="threshold")
-        arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
-                                help=HELP_ANGLE, metavar="angle")
-        arg_parser.add_argument("-sa", default=SANGLE_DEFAULT, dest="sangle",
-                                help=HELP_SANGLE, metavar="sangle")
-        arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
-                                help=HELP_SIZE, metavar="size")
-        arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
-                                dest="randomness", help=HELP_RANDOMNESS,
-                                metavar="randomness")
-        arg_parser.add_argument("-l", default=LENGTH_DEFAULT, dest="length",
-                                help=HELP_LENGTH, metavar="length")
+        arg_parser.add_argument("-t", default=DEFAULTS["threshold_arg"],
+                                dest="threshold_arg", help=HELP_THRESHOLD,
+                                metavar="threshold_arg")
+        arg_parser.add_argument("-a", default=DEFAULTS["angle_arg"],
+                                dest="angle_arg", help=HELP_ANGLE,
+                                metavar="angle_arg")
+        arg_parser.add_argument("-sa", default=DEFAULTS["sangle_arg"],
+                                dest="sangle_arg", help=HELP_SANGLE,
+                                metavar="sangle_arg")
+        arg_parser.add_argument("-sz", default=DEFAULTS["size_arg"],
+                                dest="size_arg", help=HELP_SIZE,
+                                metavar="size_arg")
+        arg_parser.add_argument("-r", default=DEFAULTS["randomness_arg"],
+                                dest="randomness_arg", help=HELP_RANDOMNESS,
+                                metavar="randomness_arg")
+        arg_parser.add_argument("-l", default=DEFAULTS["length_arg"],
+                                dest="length_arg", help=HELP_LENGTH,
+                                metavar="length_arg")
 
-        arg_parser.add_argument("-sc", default=SCALE_DEFAULT, dest="scale",
-                                help=HELP_SCALE, metavar="scale")
-        arg_parser.add_argument("-w", default=WIDTH_DEFAULT, dest="width",
-                                help=HELP_WIDTH, metavar="width")
-        arg_parser.add_argument("-hg", default=HEIGHT_DEFAULT, dest="height",
-                                help=HELP_HEIGHT, metavar="height")
+        arg_parser.add_argument("-sc", default=DEFAULTS["scale_arg"],
+                                dest="scale_arg", help=HELP_SCALE,
+                                metavar="scale_arg")
+        arg_parser.add_argument("-w", default=DEFAULTS["width_arg"],
+                                dest="width_arg", help=HELP_WIDTH,
+                                metavar="width_arg")
+        arg_parser.add_argument("-hg", default=DEFAULTS["height_arg"],
+                                dest="height_arg", help=HELP_HEIGHT,
+                                metavar="height_arg")
 
-        arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
-                                help=HELP_AMOUNT, metavar="amount", type=int)
+        arg_parser.add_argument("-am", default=DEFAULT["amount"],
+                                dest="amount", help=HELP_AMOUNT,
+                                metavar="amount", type=int)
 
-        arg_parser.add_argument("--sp", action="store_true",
-                                dest="second_pass", help=HELP_SECOND_PASS)
+        arg_parser.add_argument("--sp", action="store_true", dest="second_pass",
+                                help=HELP_SECOND_PASS)
         arg_parser.add_argument("--rev", action="store_true", dest="reverse",
                                 help=HELP_REVERSE)
         arg_parser.add_argument("--silent", action="store_true", dest="silent",
                                 help=HELP_SILENT)
-        arg_parser.add_argument("--no-log", action="store_true", dest="nolog")
+        arg_parser.add_argument("--no-log", action="store_true", dest="nolog",
+                                help=HELP_NOLOG)
 
         args = arg_parser.parse_args()
 
         self.loglevel = args.loglevel
 
-        self.input_filename = args.input_filename
-        self.output_file = args.output_file
-        self.format = args.format
+        for arg in list(args.keys()):
+            self.settings[arg] = args.__dict__[arg]
 
-        self.segmentation = args.segmentation
-        self.skey_choice = args.skey_choice
-        self.skey = skeys[self.skey_choice]
+        self.skey = skeys[self.settings["skey_choice"]]
 
-        self.threshold = args.threshold
-        self.angle = args.angle
-        self.sangle = args.sangle
-        self.size = args.size
-        self.randomness = args.randomness
-        self.length = args.length
-
-        self.scale = args.scale
-        self.width = args.width
-        self.height = args.height
-
-        self.amount = args.amount
-        self.second_pass = args.second_pass
-        self.reverse = args.reverse
-
-        self.silent = args.silent
-        self.nolog = args.nolog
-
-        self.stream_handler.setLevel(self.loglevel.upper())
-        if self.silent or self.nolog:
+        self.stream_handler.setLevel(self.settings["loglevel"].upper())
+        if self.settings["silent"] or self.settings["nolog"]:
             self.logger.removeHandler(self.stream_handler)
-        if self.nolog:
+        if self.settings["nolog"]:
             self.logger.removeHandler(self.file_handler)
 
-        if self.segmentation != "edge":
-            self.threshold = THRESHOLD_DEFAULT
+        if self.settings["segmentation"] != "edge":
+            self.settings["threshold_arg"] = DEFAULTS["threshold_arg"]
 
-        if not self.second_pass:
-            self.sangle = SANGLE_DEFAULT
+        if not self.settings["second_pass"]:
+            self.settings["sangle_arg"] = DEFAULTS["sangle_arg"]
 
-        if not self.segmentation in ("melting", "blocky"):
-            self.size = SIZE_DEFAULT
+        if not self.settings["segmentation"] in ("melting", "blocky"):
+            self.settings["size_arg"] = DEFAULTS["size_arg"]
 
-        if not self.segmentation in ("blocky", "chunky"):
-            self.randomness = RANDOMNESS_DEFAULT
+        if not self.settings["segmentation"] in ("blocky", "chunky"):
+            self.settings["randomness_arg"] = DEFAULTS["randomness_arg"]
 
-        if self.segmentation != "chunky":
-            self.length = LENGTH_DEFAULT
+        if self.settings["segmentation"] != "chunky":
+            self.settings["length_arg"] = DEFAULTS["length_arg"]
 
-        if str(self.width) != "0" or str(self.height) != "0":
-            self.scale = SCALE_DEFAULT
+        if str(self.settings["width_arg"]) != "0" or str(self.settings["height_arg"]) != "0":
+            self.settings["scale_arg"] = DEFAULTS["scale_arg"]
 
-        self.t_range =  self.parse_range(str(self.threshold), "threshold",
+        self.settings["t_range"] =  self.parse_range(str(self.settings["threshold_arg"]), "threshold_arg",
                                                                    0, 1)
-        self.a_range =  tuple(map(int, self.parse_range(str(self.angle), "angle",
+        self.settings["a_range"] =  tuple(map(int, self.parse_range(str(self.settings["angle_arg"]), "angle_arg",
                                                                    0, 360)))
-        self.sa_range = tuple(map(int, self.parse_range(str(self.sangle), "sangle",
+        self.settings["sa_range"] = tuple(map(int, self.parse_range(str(self.settings["sangle_arg"]), "sangle_arg",
                                                                    0, 360)))
-        self.sz_range = self.parse_range(str(self.size), "size",   0, 1)
-        self.r_range =  self.parse_range(str(self.randomness), "randomness",
+        self.settings["sz_range"] = self.parse_range(str(self.settings["size_arg"]), "size_arg",
                                                                    0, 1)
-        self.l_range = tuple(map(int, self.parse_range(str(self.length), "length",
+        self.settings["r_range"] =  self.parse_range(str(self.settings["randomness_arg"]), "randomness_arg",
+                                                                   0, 1)
+        self.settings["l_range"] = tuple(map(int, self.parse_range(str(self.settings["length_arg"]), "length_arg",
                                                                    1, None)))
 
-        self.sc_range = self.parse_range(str(self.scale), "scale", 0.01, 10)
-        self.w_range =  tuple(map(int, self.parse_range(str(self.width), "width",
+        self.settings["sc_range"] = self.parse_range(str(self.settings["scale_arg"]), "scale_arg",
+                                                                   0.01, 10)
+        self.settings["w_range"] =  tuple(map(int, self.parse_range(str(self.settings["width_arg"]), "width_arg",
                                                                    0, None)))
-        self.h_range =  tuple(map(int, self.parse_range(str(self.height), "height",
+        self.settings["h_range"] =  tuple(map(int, self.parse_range(str(self.settings["height_arg"]), "height_arg",
                                                                    0, None)))
 
         self.logger.debug("Arg parsing done.")
 
-        if self.amount < 1:
-            self.logger.warning(f"Amount value is invalid, will use {AMOUNT_DEFAULT} (default).")
-            self.amount = AMOUNT_DEFAULT
+        if self.settings["amount"] < 1:
+            self.logger.warning(f"Amount value is invalid, will use {DEFAULTS['amount']} instead (default).")
+            self.settings["amount"] = DEFAULTS["amount"]
 
-        # it is temporary, we need store ranges in dictionary
-
-        self.logger.debug(f"self.input_filename = {self.input_filename}")
-        self.logger.debug(f"self.output_file = {self.output_file}")
-        self.logger.debug(f"self.format = {self.format}")
-        self.logger.debug(f"self.segmentation = {self.segmentation}")
-        self.logger.debug(f"self.skey_choice = {self.skey_choice}")
-
-        self.logger.debug(f"self.t_range = {self.t_range}")
-        self.logger.debug(f"self.a_range = {self.a_range}")
-        self.logger.debug(f"self.sa_range = {self.sa_range}")
-        self.logger.debug(f"self.sz_range = {self.sz_range}")
-        self.logger.debug(f"self.r_range = {self.r_range}")
-        self.logger.debug(f"self.l_range = {self.l_range}")
-        self.logger.debug(f"self.sc_range = {self.sc_range}")
-        self.logger.debug(f"self.w_range = {self.w_range}")
-        self.logger.debug(f"self.h_range = {self.h_range}")
-
-        self.logger.debug(f"self.amount = {self.amount}")
-        self.logger.debug(f"self.second_pass = {self.second_pass}")
-        self.logger.debug(f"self.reverse = {self.reverse}")
-        self.logger.debug(f"self.silent = {self.reverse}")
-        self.logger.debug(f"self.nolog = {self.nolog}")
+        for i in list(self.settings.keys()):
+            self.logger.debug(f"{i} = {self.settings[i]}")
 
     def parse_range(self, arg: str, arg_name: str, minv: float=None, maxv: float=None) -> tuple:
         """
