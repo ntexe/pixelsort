@@ -30,6 +30,18 @@ DEFAULTS = {
     "nolog":          False
 }
 
+RANGE_NAMES = {
+    "t_range":  "threshold",
+    "a_range":  "angle",
+    "sa_range": "sangle",
+    "sz_range": "size",
+    "r_range":  "randomness",
+    "l_range":  "length",
+    "sc_range": "scale",
+    "w_range":  "width",
+    "h_range":  "height",
+}
+
 RANGE_DEFAULTS = {
     "t_range":  (DEFAULTS["threshold_arg"] ,)*2,
     "a_range":  (DEFAULTS["angle_arg"]     ,)*2,
@@ -42,24 +54,36 @@ RANGE_DEFAULTS = {
     "h_range":  (DEFAULTS["height_arg"]    ,)*2,
 }
 
+RANGE_TYPES = {
+    "t_range":  float,
+    "a_range":  int,
+    "sa_range": int,
+    "sz_range": float,
+    "r_range":  float,
+    "l_range":  int,
+    "sc_range": float,
+    "w_range":  int,
+    "h_range":  int,
+}
+
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
 HELP_LOGLEVEL = f"Log level for command line. Available choices: {', '.join(LOGLEVEL_CHOICES)} (lowercase is also accepted). Default is {DEFAULTS['loglevel']}"
 HELP_INPUT_PATH = "Input image file path."
 HELP_OUTPUT_PATH = "Output image file path."
 HELP_FORMAT = f"Output image format. Available choices: {', '.join(FORMAT_CHOICES)}. Default is {DEFAULTS['format']}."
-HELP_SEGMENTATION = f"Segmentation. Available choices: {', '.join(SEGMENTATION_CHOICES)}. Default is {DEFAULTS['segmentaion']}."
+HELP_SEGMENTATION = f"Segmentation. Available choices: {', '.join(SEGMENTATION_CHOICES)}. Default is {DEFAULTS['segmentation']}."
 HELP_SKEY = f"Sorting key. Available choices: {', '.join(SKEY_CHOICES)}. Default is {DEFAULTS['skey_choice']}."
 
-HELP_THRESHOLD = f"Threshold for edge detection. Value should be between 0 and 1. Default is {DEFAULTS['threshold']}."
-HELP_ANGLE = f"Angle to rotate the image before sorting in degrees. Value should be between 0 and 360. Default is {DEFAULTS['angle']}."
-HELP_SANGLE = f"Angle for second pass. Value should be between 0 and 360. Default is {DEFAULTS['sangle']}."
-HELP_SIZE = f"Size of \"melting\" or \"blocky\" segmentation. Value should be between 0 and 1. Default is {DEFAULTS['size']}."
-HELP_RANDOMNESS = f"Randomness of \"blocky\" or \"chunky\" segmentation. Value should be between 0 and 0.5. Default is {DEFAULTS['randomness']}."
-HELP_LENGTH = f"Length of \"chunky\" segmentation. Value should be a natural value. Default is {DEFAULTS['length']}."
+HELP_THRESHOLD = f"Threshold for edge detection. Value should be between 0 and 1. Default is {DEFAULTS['threshold_arg']}."
+HELP_ANGLE = f"Angle to rotate the image before sorting in degrees. Value should be between 0 and 360. Default is {DEFAULTS['angle_arg']}."
+HELP_SANGLE = f"Angle for second pass. Value should be between 0 and 360. Default is {DEFAULTS['sangle_arg']}."
+HELP_SIZE = f"Size of \"melting\" or \"blocky\" segmentation. Value should be between 0.01 and 1. Default is {DEFAULTS['size_arg']}."
+HELP_RANDOMNESS = f"Randomness of \"blocky\" or \"chunky\" segmentation. Value should be between 0 and 0.5. Default is {DEFAULTS['randomness_arg']}."
+HELP_LENGTH = f"Length of \"chunky\" segmentation. Value should be a natural value. Default is {DEFAULTS['length_arg']}."
 
-HELP_SCALE = f"Rescale image before sorting. If width or height are non-zero this value will be ignored. Value should be between 0.01 and 10. Default is {DEFAULTS['scale']}."
-HELP_WIDTH = f"Resize to width before sorting. Value should be greater than or equal to 0. If value is zero, width is calculated automatically. Default is {DEFAULTS['width']}."
-HELP_HEIGHT = f"Resize to height before sorting. Value should be greater than or equal to 0. If value is zero, height is calculated automatically. Default is {DEFAULTS['height']}."
+HELP_SCALE = f"Rescale image before sorting. If width or height are non-zero this value will be ignored. Value should be between 0.01 and 10. Default is {DEFAULTS['scale_arg']}."
+HELP_WIDTH = f"Resize to width before sorting. Value should be greater than or equal to 0. If value is zero, width is calculated automatically. Default is {DEFAULTS['width_arg']}."
+HELP_HEIGHT = f"Resize to height before sorting. Value should be greater than or equal to 0. If value is zero, height is calculated automatically. Default is {DEFAULTS['height_arg']}."
 
 HELP_AMOUNT = f"Amount of images. Value should be a natural value. Default is {DEFAULTS['amount']}."
 
