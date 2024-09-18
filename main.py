@@ -9,6 +9,8 @@ from PIL import Image, ImageFilter
 
 from constants import *
 import pixel_utils
+from utils import Option, SortParams
+from options import Options, gen_options
 
 skeys = {
     "hue": pixel_utils.hue,
@@ -26,24 +28,9 @@ class PixelSort:
         self.img = None
         self.logger = None
 
-        self.input_filename = None
+        self.options = gen_options()
 
-        self.segmentation = SEGMENTATION_DEFAULT
-        self.skey_choice = SKEY_DEFAULT
-        self.skey = skeys[self.skey_choice]
-
-        self.t_range, self.threshold = (THRESHOLD_DEFAULT,)*2, THRESHOLD_DEFAULT
-        self.a_range, self.angle = (ANGLE_DEFAULT,)*2, ANGLE_DEFAULT
-        self.sa_range, self.sangle = (SANGLE_DEFAULT,)*2, SANGLE_DEFAULT
-        self.sz_range, self.size = (SIZE_DEFAULT,)*2, SIZE_DEFAULT
-        self.r_range, self.randomness = (RANDOMNESS_DEFAULT,)*2, RANDOMNESS_DEFAULT
-        self.l_range, self.length = (LENGTH_DEFAULT,)*2, LENGTH_DEFAULT
-
-        self.sc_range, self.scale = (SCALE_DEFAULT,)*2, SCALE_DEFAULT
-        self.w_range, self.width = (WIDTH_DEFAULT,)*2, WIDTH_DEFAULT
-        self.h_range, self.height = (HEIGHT_DEFAULT,)*2, HEIGHT_DEFAULT
-
-        self.amount = AMOUNT_DEFAULT
+        self.skey = skeys[self.options.sk.default]
 
         self.img_size = [0,0]
         self.img_filename = ""
@@ -63,15 +50,15 @@ class PixelSort:
         self.setup_logging()
         self.parse_args()
 
-        self.img_filename = os.path.basename(os.path.realpath(self.input_filename))
+        self.img_filename = os.path.basename(os.path.realpath(self.options.input_path.value))
         self.logger.info(f"Opening image {self.img_filename}...")
 
-        img = Image.open(self.input_filename)
+        img = Image.open(self.options.input_path.value)
 
         self.logger.debug("Converting image to RGB...")
         self.img = img.convert("RGB")
 
-        for i in range(1, self.amount+1):
+        for i in range(1, self.options.am.value+1):
             start_time = time.monotonic()
             self.process_image(i)
             self.logger.info(f"Image {i} done in {time.monotonic()-start_time:.2f} seconds.")
@@ -114,161 +101,84 @@ class PixelSort:
         """
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
 
-        arg_parser.add_argument("-ll", choices=LOGLEVEL_CHOICES+AUX_LL_CHOICES,
-                                default=LOGLEVEL_DEFAULT,dest="loglevel",
-                                help=HELP_LOGLEVEL, metavar="loglevel")
+        arg_parser.add_argument("input_path", help=HELP_INPUT_PATH)
 
-        arg_parser.add_argument("input_filename", help=HELP_INPUT_FILENAME)
-        arg_parser.add_argument("-o", default=None, dest="output_file",
-                                help=HELP_OUTPUT, metavar="output_file")
-        arg_parser.add_argument("-f", choices=FORMAT_CHOICES,
-                                default=FORMAT_DEFAULT, dest="format",
-                                help=HELP_FORMAT, metavar="format")
+        for option in self.options.__dict__.values():
+            if option.option_type == 0:
+                arg_parser.add_argument(f"--{option.short}", f"--{option.name}",
+                                        action="store_true", help=option.help_string,
+                                        dest=option.short)
 
-        arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
-                                default=SEGMENTATION_DEFAULT,
-                                dest="segmentation", help=HELP_SEGMENTATION,
-                                metavar="segmentation")
-        arg_parser.add_argument("-sk", choices=SKEY_CHOICES,
-                                default=SKEY_DEFAULT, dest="skey_choice",
-                                help=HELP_SKEY, metavar="skey_choice")
+            if option.option_type == 1:
+                if option.isvariable:
+                    arg_parser.add_argument(f"-{option.short}", f"--{option.name}",
+                                            default=option.default, 
+                                            choices=option.choices, help=option.help_string,
+                                            metavar="", dest=option.short)
+                else:
+                    arg_parser.add_argument(f"-{option.short}", f"--{option.name}",
+                                            default=option.default, 
+                                            choices=option.choices, help=option.help_string,
+                                            metavar="", dest=option.short, type=option.val_type)
 
-        arg_parser.add_argument("-t", default=THRESHOLD_DEFAULT,
-                                dest="threshold", help=HELP_THRESHOLD,
-                                metavar="threshold")
-        arg_parser.add_argument("-a", default=ANGLE_DEFAULT, dest="angle",
-                                help=HELP_ANGLE, metavar="angle")
-        arg_parser.add_argument("-sa", default=SANGLE_DEFAULT, dest="sangle",
-                                help=HELP_SANGLE, metavar="sangle")
-        arg_parser.add_argument("-sz", default=SIZE_DEFAULT, dest="size",
-                                help=HELP_SIZE, metavar="size")
-        arg_parser.add_argument("-r", default=RANDOMNESS_DEFAULT,
-                                dest="randomness", help=HELP_RANDOMNESS,
-                                metavar="randomness")
-        arg_parser.add_argument("-l", default=LENGTH_DEFAULT, dest="length",
-                                help=HELP_LENGTH, metavar="length")
-
-        arg_parser.add_argument("-sc", default=SCALE_DEFAULT, dest="scale",
-                                help=HELP_SCALE, metavar="scale")
-        arg_parser.add_argument("-w", default=WIDTH_DEFAULT, dest="width",
-                                help=HELP_WIDTH, metavar="width")
-        arg_parser.add_argument("-hg", default=HEIGHT_DEFAULT, dest="height",
-                                help=HELP_HEIGHT, metavar="height")
-
-        arg_parser.add_argument("-am", default=AMOUNT_DEFAULT, dest="amount",
-                                help=HELP_AMOUNT, metavar="amount", type=int)
-
-        arg_parser.add_argument("--sp", action="store_true",
-                                dest="second_pass", help=HELP_SECOND_PASS)
-        arg_parser.add_argument("--rev", action="store_true", dest="reverse",
-                                help=HELP_REVERSE)
-        arg_parser.add_argument("--silent", action="store_true", dest="silent",
-                                help=HELP_SILENT)
-        arg_parser.add_argument("--no-log", action="store_true", dest="nolog")
 
         args = arg_parser.parse_args()
 
-        self.loglevel = args.loglevel
+        # apply args to options object
+        for option in self.options.__dict__.values():
+            setattr(option, "value", args.__dict__[option.short])
 
-        self.input_filename = args.input_filename
-        self.output_file = args.output_file
-        self.format = args.format
+        self.skey = skeys[self.options.sk.value]
 
-        self.segmentation = args.segmentation
-        self.skey_choice = args.skey_choice
-        self.skey = skeys[self.skey_choice]
-
-        self.threshold = args.threshold
-        self.angle = args.angle
-        self.sangle = args.sangle
-        self.size = args.size
-        self.randomness = args.randomness
-        self.length = args.length
-
-        self.scale = args.scale
-        self.width = args.width
-        self.height = args.height
-
-        self.amount = args.amount
-        self.second_pass = args.second_pass
-        self.reverse = args.reverse
-
-        self.silent = args.silent
-        self.nolog = args.nolog
-
-        self.stream_handler.setLevel(self.loglevel.upper())
-        if self.silent or self.nolog:
+        # change options of logging
+        self.stream_handler.setLevel(self.options.ll.value.upper())
+        if self.options.sl.value or self.options.nl.value:
             self.logger.removeHandler(self.stream_handler)
-        if self.nolog:
+        if self.options.nl.value:
             self.logger.removeHandler(self.file_handler)
 
-        if self.segmentation != "edge":
-            self.threshold = THRESHOLD_DEFAULT
+        # set values to default if these values will not be used
+        if self.options.sg.value != "edge":
+            self.options.t.set_to_default()
 
-        if not self.second_pass:
-            self.sangle = SANGLE_DEFAULT
+        if not self.options.sp.value:
+            self.options.sa.set_to_default()
 
-        if not self.segmentation in ("melting", "blocky"):
-            self.size = SIZE_DEFAULT
+        if not self.options.sg.value in ("melting", "blocky"):
+            self.options.sz.set_to_default()
 
-        if not self.segmentation in ("blocky", "chunky"):
-            self.randomness = RANDOMNESS_DEFAULT
+        if not self.options.sg.value in ("blocky", "chunky"):
+            self.options.r.set_to_default()
 
-        if self.segmentation != "chunky":
-            self.length = LENGTH_DEFAULT
+        if self.options.sg.value != "chunky":
+            self.options.l.set_to_default()
 
-        if str(self.width) != "0" or str(self.height) != "0":
-            self.scale = SCALE_DEFAULT
+        if str(self.options.w.value) != "0" or str(self.options.hg.value) != "0":
+            self.options.sc.set_to_default()
 
-        self.t_range =  self.parse_range(str(self.threshold), "threshold",
-                                                                   0, 1)
-        self.a_range =  tuple(map(int, self.parse_range(str(self.angle), "angle",
-                                                                   0, 360)))
-        self.sa_range = tuple(map(int, self.parse_range(str(self.sangle), "sangle",
-                                                                   0, 360)))
-        self.sz_range = self.parse_range(str(self.size), "size",   0, 1)
-        self.r_range =  self.parse_range(str(self.randomness), "randomness",
-                                                                   0, 1)
-        self.l_range = tuple(map(int, self.parse_range(str(self.length), "length",
-                                                                   1, None)))
+        for option in self.options.__dict__.values():
+            # parse keyframes
+            if option.isvariable:
+                self.parse_keyframes(option)
 
-        self.sc_range = self.parse_range(str(self.scale), "scale", 0.01, 10)
-        self.w_range =  tuple(map(int, self.parse_range(str(self.width), "width",
-                                                                   0, None)))
-        self.h_range =  tuple(map(int, self.parse_range(str(self.height), "height",
-                                                                   0, None)))
+            # validate
+            if option.bounds != None and not option.isvariable:
+                if option.bounds[0] != None:
+                    if option.value < option.bounds[0]:
+                        self.logger.warning(f"{option.name.capitalize()} value is too small, will use default.")
+                        option.set_to_default()
+
+                if option.bounds[1] != None:
+                    if option.value > option.bounds[1]:
+                        self.logger.warning(f"{option.name.capitalize()} value is too big, will use default.")
+                        option.set_to_default()
 
         self.logger.debug("Arg parsing done.")
 
-        if self.amount < 1:
-            self.logger.warning(f"Amount value is invalid, will use {AMOUNT_DEFAULT} (default).")
-            self.amount = AMOUNT_DEFAULT
+        for option in self.options.__dict__.values():
+            self.logger.debug(f"{option.name} = {option.value}")
 
-        # it is temporary, we need store ranges in dictionary
-
-        self.logger.debug(f"self.input_filename = {self.input_filename}")
-        self.logger.debug(f"self.output_file = {self.output_file}")
-        self.logger.debug(f"self.format = {self.format}")
-        self.logger.debug(f"self.segmentation = {self.segmentation}")
-        self.logger.debug(f"self.skey_choice = {self.skey_choice}")
-
-        self.logger.debug(f"self.t_range = {self.t_range}")
-        self.logger.debug(f"self.a_range = {self.a_range}")
-        self.logger.debug(f"self.sa_range = {self.sa_range}")
-        self.logger.debug(f"self.sz_range = {self.sz_range}")
-        self.logger.debug(f"self.r_range = {self.r_range}")
-        self.logger.debug(f"self.l_range = {self.l_range}")
-        self.logger.debug(f"self.sc_range = {self.sc_range}")
-        self.logger.debug(f"self.w_range = {self.w_range}")
-        self.logger.debug(f"self.h_range = {self.h_range}")
-
-        self.logger.debug(f"self.amount = {self.amount}")
-        self.logger.debug(f"self.second_pass = {self.second_pass}")
-        self.logger.debug(f"self.reverse = {self.reverse}")
-        self.logger.debug(f"self.silent = {self.reverse}")
-        self.logger.debug(f"self.nolog = {self.nolog}")
-
-    def parse_range(self, arg: str, arg_name: str, minv: float=None, maxv: float=None) -> tuple:
+    def parse_keyframes(self, option) -> tuple:
         """
         Function that parses string with two comma-separated values and checks
         if these values match the following expression: minv <= x <= maxv. If
@@ -284,23 +194,38 @@ class PixelSort:
         tuple:          Tuple with two float values
         """
 
-        # TODO: instead of runtimeerror just warn and set the value to default
+        if not option.isvariable:
+            return
 
-        if len(arg.split(",")) > 2:
-            raise RuntimeError(f"Too many values in {arg_name} argument.")
+        splitted = str(option.value).split(",")
 
-        start = float(arg.split(",")[0])
-        end = float(arg.split(",")[-1])
+        if len(splitted) > 2:
+            self.logger.warning(f"Too many values in {option.name} argument, will use default.")
+            option.set_to_default()
+            return (option.value,)*2
 
-        if minv != None:
-            if start < minv or end < minv:
-                raise RuntimeError(f"{arg_name.capitalize()} value is too small.") 
+        start = option.val_type(splitted[0])
+        end = option.val_type(splitted[-1])
 
-        if maxv != None:
-            if start > maxv or end > maxv:
-                raise RuntimeError(f"{arg_name.capitalize()} value is too big.")
+        if option.bounds[0] != None:
+            if start < option.bounds[0]:
+                self.logger.warning(f"{option.name.capitalize()} first value is too small, will use default.")
+                start = option.default
 
-        return (start, end)
+            if end < option.bounds[0]:
+                self.logger.warning(f"{option.name.capitalize()} second value is too small, will use default.")
+                end = option.default
+
+        if option.bounds[1] != None:
+            if start > option.bounds[1]:
+                self.logger.warning(f"{option.name.capitalize()} first value is too big, will use default.")
+                start = option.default
+
+            if end > option.bounds[1]:
+                self.logger.warning(f"{option.name.capitalize()} second value is too big, will use default.")
+                end = option.default
+
+        option.keyframes = (start, end)
 
     def get_balance(self, v: tuple, i:int, max_i:int) -> float:
         """
@@ -316,7 +241,7 @@ class PixelSort:
         """
         return (v[0]*(max(1, max_i-1)-(i-1)) + v[1]*(i-1))/max(1, max_i-1)
 
-    def calc_dims(self, dims:tuple, scale: float, arg_dims: tuple) -> tuple:
+    def calc_dims(self, dims:tuple, sort_params) -> tuple:
         """
         Function to calculate dimensions of new image.
 
@@ -329,25 +254,27 @@ class PixelSort:
         tuple:            Tuple of new dimensions
         """
 
+        # TODO: cleanup
+
         new_width, new_height = dims
 
-        if arg_dims[1] != 0 or arg_dims[0] != 0:
-            if arg_dims[0] != 0:
-                new_width = arg_dims[0]
+        if sort_params.w != 0 or sort_params.hg != 0: # if width or height nonzero
+            if sort_params.w != 0:
+                new_width = sort_params.w
 
-                if arg_dims[1] == 0:
-                    new_height = round((dims[1] / dims[0]) * arg_dims[0])
+                if sort_params.hg == 0:
+                    new_height = round((dims[1] / dims[0]) * sort_params.w)
 
-            if arg_dims[1] != 0:
-                new_height = arg_dims[1]
+            if sort_params.hg != 0:
+                new_height = sort_params.hg
 
-                if arg_dims[0] == 0:
-                    new_width = round((dims[0] / dims[1]) * arg_dims[1])
+                if sort_params.w == 0:
+                    new_width = round((dims[0] / dims[1]) * sort_params.hg)
 
             return (new_width, new_height)
 
-        if scale != 1:
-            new_width, new_height = round(dims[0]*scale), round(dims[1]*scale)
+        if sort_params.sc != 1: # if scale is not one
+            new_width, new_height = round(dims[0]*sort_params.sc), round(dims[1]*sort_params.sc)
 
         return (new_width, new_height)
 
@@ -361,82 +288,69 @@ class PixelSort:
         Returns:
         None
         """
+        sort_params = SortParams()
+        sp_sort_params = SortParams()
 
-        self.logger.info(f"Preparing image {i}/{self.amount}...")
+        self.logger.info(f"Preparing image {i}/{self.options.am.value}...")
 
         self.logger.debug("Calculating parameters...")
 
-        threshold =  round(self.get_balance(self.t_range,  i, self.amount), 3)
-        angle =      round(self.get_balance(self.a_range,  i, self.amount)   )
-        sangle =     round(self.get_balance(self.sa_range, i, self.amount)   )
-        size =       round(self.get_balance(self.sz_range, i, self.amount), 3)
-        randomness = round(self.get_balance(self.r_range,  i, self.amount), 3)
-        length =     round(self.get_balance(self.l_range,  i, self.amount)   )
+        for option in self.options.__dict__.values():
+            if option.isvariable:
+                setattr(sort_params, option.short, round(self.get_balance(option.keyframes, i, self.options.am.value), 3 if option.val_type == float else None))
+                # copy sort_params to sp_sort_params
+                setattr(sp_sort_params, option.short, getattr(sort_params, option.short))
+                # log parameters
+                self.logger.debug(f"{option.short} = {sort_params.__dict__[option.short]}")
 
-        scale =      round(self.get_balance(self.sc_range, i, self.amount), 3)
-        width =      round(self.get_balance(self.w_range,  i, self.amount)   )
-        height =     round(self.get_balance(self.h_range,  i, self.amount)   )
-
-        self.logger.debug(f"threshold = {threshold}")
-        self.logger.debug(f"angle = {angle}")
-        self.logger.debug(f"sangle = {sangle}")
-        self.logger.debug(f"size = {size}")
-        self.logger.debug(f"randomness = {randomness}")
-        self.logger.debug(f"length = {length}")
-        self.logger.debug(f"scale = {scale}")
-        self.logger.debug(f"width = {width}")
-        self.logger.debug(f"height = {height}")
+        sp_sort_params.a = sort_params.a+sort_params.sa
 
         # resize
-        new_dims = self.calc_dims(self.img.size, scale, (width,height))
+        new_dims = self.calc_dims(self.img.size, sort_params)
         self.logger.debug(f"Resizing image to {new_dims[0]}x{new_dims[1]}...")
         rimg = self.img.resize(new_dims)
         self.img_size = new_dims
 
         # rotate
-        self.logger.debug(f"Rotating image by {angle} degrees...")
-        rimg = rimg.rotate(angle, expand=True)
+        self.logger.debug(f"Rotating image by {sort_params.a} degrees...")
+        rimg = rimg.rotate(sort_params.a, expand=True)
 
         # edge detection
-        if self.segmentation == "edge":
+        if self.options.sg.value == "edge":
             self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
             self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
 
         self.logger.info("Sorting image...")
         self.image_data = list(rimg.getdata())
-        self.sort_image(self.segmentation, self.skey, threshold, angle, size,
-                        randomness, length, rimg.size)
+        self.sort_image(sort_params, rimg.size)
         rimg.putdata(self.image_data)
-        self.logger.debug("First pass sorting done." if self.second_pass else "Sorting done.")
+        self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
-        self.logger.debug(f"Rotating image by {-angle} degrees...")
-        rimg = rimg.rotate(-angle, expand=True)
+        self.logger.debug(f"Rotating image by {-sort_params.a} degrees...")
+        rimg = rimg.rotate(-sort_params.a, expand=True)
         rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
-        if self.second_pass:
+        if self.options.sp.value:
             self.logger.info("Second pass preparing...")
 
-            self.logger.debug(f"Rotating image by {angle+sangle} degrees...")
-            rimg = rimg.rotate(angle+sangle, expand=True)
+            self.logger.debug(f"Rotating image by {sp_sort_params.a} degrees...")
+            rimg = rimg.rotate(sp_sort_params.a, expand=True)
 
-            if self.segmentation == "edge":
+            if self.options.sg.value == "edge":
                 self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
                 self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
             
             self.logger.info("Second pass sorting...")
             self.image_data = list(rimg.getdata())
-            self.sort_image(self.segmentation, self.skey, threshold,
-                            angle+sangle, size, randomness, length, rimg.size)
+            self.sort_image(sp_sort_params, rimg.size)
             rimg.putdata(self.image_data)
             self.logger.debug("Second pass sorting done.")
 
-            self.logger.debug(f"Rotating image by {-(angle+sangle)} degrees...")
-            rimg = rimg.rotate(-(angle+sangle), expand=True)
+            self.logger.debug(f"Rotating image by {-sp_sort_params.a} degrees...")
+            rimg = rimg.rotate(-sp_sort_params.a, expand=True)
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
-        filename = self.generate_filename(self.img_filename, self.segmentation,
-            self.skey_choice, threshold, angle, sangle, size, randomness,
-            length, scale, width, height, i)
+        filename = self.generate_filename(self.img_filename, sort_params, i)
 
         self.logger.info(f"Saving to {filename}...")
 
@@ -459,63 +373,45 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_filename(self, fn: str, sg: str, skc: str, t: float, a: int,
-                          sa: int, sz: float, r: float, l:int, sc:float,
-                          w:int, hg:int, i: int) -> str:
+    def generate_filename(self, fn: str, sp, i: int) -> str:
         """
         Function that generates and returns filename for output image.
 
         Parameters:
-        fn (str):   Input image file name
-        sg (str):   Segmentation
-        skc (str):  Sorting key choice
-        t (float):  Threshold
-        a (int):    Angle
-        sa (int):   Second pass angle
-        sz (float): Size
-        r (float):  Randomness
-        l (int):    Length
-        i (int):    Number of image
+        fn (str):           Input image file name
+        sp (dict): Sort parameters
+        i (int):            Number of image
 
         Returns:
         filename (str): Output file name
         """
-        if self.output_file:
-            return self.output_file
 
-        filename =  fn.split(".")[0]
-        filename += f"_sg_{sg}"    if sg != SEGMENTATION_DEFAULT            else ""
-        filename += f"_sk_{skc}"   if skc != SKEY_DEFAULT                   else ""
-        filename += f"_t{t:.3f}"   if self.threshold != THRESHOLD_DEFAULT   else ""
-        filename += f"_a{a}"       if self.angle != ANGLE_DEFAULT           else ""
-        filename += f"_sa{sa}"     if self.sangle != SANGLE_DEFAULT         else ""
-        filename += f"_sz{sz:.3f}" if self.size != SIZE_DEFAULT             else ""
-        filename += f"_r{r:.3f}"   if self.randomness != RANDOMNESS_DEFAULT else ""
-        filename += f"_l{l}"       if self.length != LENGTH_DEFAULT         else ""
-        filename += f"_sc{sc:.3f}" if self.scale != SCALE_DEFAULT           else ""
-        filename += f"_w{w}"       if self.width != WIDTH_DEFAULT           else ""
-        filename += f"_hg{hg}"     if self.height != HEIGHT_DEFAULT         else ""
-        filename += "_sp"          if self.second_pass                      else ""
-        filename += "_rev"         if self.reverse                          else ""
+        if self.options.o.value:
+            return self.options.o.value
+
+        filename = fn.split(".")[0]
+
+        for option in self.options.__dict__.values():
+            if option.show and option.value != option.default:
+                if option.isvariable:
+                    filename += f"_{option.short}_{getattr(sp, option.short)}"
+                elif option.val_type == bool:
+                    filename += f"_{option.short}"
+                else:
+                    filename += f"_{option.short}_{option.value}"
+
         filename += f"_{i:04}"
-        filename += f".{fn.split('.')[-1] if self.format == 'same' else self.format}"
+        filename += f".{fn.split('.')[-1] if self.options.f.value == 'same' else self.options.f.value}"
+
         return filename
 
-    def sort_image(self, segmentation: str, skey, threshold: float, angle: int,
-                   size: float, randomness: float, length: int,
-                   rimg_size: tuple) -> None:
+    def sort_image(self, sp: dict, rimg_size: tuple) -> None:
         """
         Function that sorts image.
 
         Parameters:
-        segmantation (str): Segmentation
-        skey:               Sorting key
-        threshold (float):  Threshold
-        angle (int):        Angle
-        size (float):       Size
-        randomness (float): Randomness
-        length (int):       Length
-        rimg_size (tuple):  Processed image size
+        sp (dict):         Sorting parameters
+        rimg_size (tuple): Processed image size
 
         Returns:
         None
@@ -523,15 +419,23 @@ class PixelSort:
 
         x1, y1 = 0, 0
 
-        sin_alpha = math.sin(math.radians(angle%90))
-        sin_beta = math.sin(math.radians(90-(angle%90)))
+        sin_alpha = math.sin(math.radians(sp.a%90))
+        sin_beta = math.sin(math.radians(90-(sp.a%90)))
 
-        x1 = self.img_size[(angle//90)%2]*sin_beta
-        y1 = self.img_size[(angle//90)%2]*sin_alpha
+        x1 = self.img_size[(sp.a//90)%2]*sin_beta
+        y1 = self.img_size[(sp.a//90)%2]*sin_alpha
         x2 = rimg_size[0]-x1
         y2 = rimg_size[1]-y1
 
         chunky_offset = 0
+
+        sg = self.options.sg.value
+        t = sp.t
+        a = sp.a
+        sz = sp.sz
+        r = sp.r
+        l = sp.l
+        re = self.options.re.value
 
         for y in range(rimg_size[1]):
             start_x = 0
@@ -541,7 +445,7 @@ class PixelSort:
 
             full_row = self.image_data[yoffset:yoffset+rimg_size[0]]
 
-            if angle % 90 != 0:
+            if sp.a % 90 != 0:
                 start_x = round(max(x1-(y/sin_alpha)*sin_beta, x2-((rimg_size[1]-y)/sin_beta)*sin_alpha))
                 end_x = round(min(x1+(y/sin_beta)*sin_alpha, x2+((rimg_size[1]-y)/sin_alpha)*sin_beta))
 
@@ -550,37 +454,37 @@ class PixelSort:
             if len(row) < 2:
                 continue
 
-            if segmentation == "none":
-                row.sort(key=skey, reverse=self.reverse)
+            if sg == "none":
+                row.sort(key=self.skey, reverse=re)
 
-            if segmentation == "edge":
+            if sg == "edge":
                 segment_begin = 0
 
                 edge_row = self.edge_image_data[yoffset+start_x:yoffset+end_x]
 
                 for x in range(len(row)):
-                    if pixel_utils.lightness(edge_row[x])/255 > threshold:
+                    if pixel_utils.lightness(edge_row[x]) > t*255:
                         if x - segment_begin > 1:
                             row[segment_begin:x] = sorted(
-                                        row[segment_begin:x], key=skey,
-                                        reverse=self.reverse)
+                                        row[segment_begin:x], key=self.skey,
+                                        reverse=re)
 
                         segment_begin = x+1
 
-            if segmentation == "melting":
-                width = size*self.img_size[0]*(1-(0.5*(random.random()+0.5)))
+            if sg == "melting":
+                width = sz*self.img_size[0]*(1-(0.5*(random.random()+0.5)))
 
                 x = 0
                 while x < len(row):
                     last_x = round(x)
                     x += width*random.random() if x == 0 else width
 
-                    row[last_x:round(x)] = sorted(row[last_x:round(x)], key=skey,
-                                            reverse=self.reverse)
+                    row[last_x:round(x)] = sorted(row[last_x:round(x)], key=self.skey,
+                                            reverse=re)
 
-            if segmentation == "blocky":
-                block_size = size*self.img_size[0]
-                offset = round(block_size*randomness*(random.random() - 0.5))
+            if sg == "blocky":
+                block_size = sz*self.img_size[0]
+                offset = round(block_size*r*(random.random() - 0.5))
 
                 x = (start_x//block_size)*block_size
                 first_iter = True
@@ -594,26 +498,26 @@ class PixelSort:
                     if max(0, end_x-x) <= -offset+1:
                         x -= offset
 
-                    row[last_x:round(x)-start_x] = sorted(row[last_x:round(x)-start_x], key=skey,
-                                            reverse=(y//block_size)%2 != self.reverse)
+                    row[last_x:round(x)-start_x] = sorted(row[last_x:round(x)-start_x], key=self.skey,
+                                            reverse=(y//block_size)%2 != re)
 
                     first_iter = False
 
-            if segmentation == "chunky":
+            if sg == "chunky":
                 offset = 0
-                x = -(length-chunky_offset)
+                x = -(l-chunky_offset)
 
                 while x < len(row):
                     last_offset = offset
-                    offset = round(length*randomness*(random.random() - 0.5))
+                    offset = round(l*r*(random.random() - 0.5))
 
                     last_x = max(x, 0)
-                    x += length
+                    x += l
 
-                    row[last_x+last_offset:x+offset] = sorted(row[last_x+last_offset:x+offset], key=skey,
-                                            reverse=self.reverse)
+                    row[last_x+last_offset:x+offset] = sorted(row[last_x+last_offset:x+offset], key=self.skey,
+                                            reverse=re)
 
-                chunky_offset = (((((len(row) - chunky_offset) // length)+1) * length) + chunky_offset) % len(row)
+                chunky_offset = (((((len(row) - chunky_offset) // l)+1) * l) + chunky_offset) % len(row)
             
             self.image_data[yoffset+start_x:yoffset+end_x] = row
 
