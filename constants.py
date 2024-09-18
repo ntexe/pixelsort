@@ -8,11 +8,10 @@ SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red
 FORMAT_CHOICES = ["png", "jpg", "same"]
 
 OPTION_DEFAULTS = {
-    "input_path": "", "output_path": "", "log_level": "INFO", "segmentation": "edge",
+    "loglevel": "INFO", "segmentation": "edge",
     "skey_choice": "lightness", "format": "same", "threshold": 0.1, "angle": 0,
     "sangle": 90, "size": 0.05, "randomness": 0, "length": 10, "scale": 1,
-    "width": 0, "height": 0, "amount": 1, "second_pass": False, "reverse": False,
-    "silent": False, "nolog": False
+    "width": 0, "height": 0, "amount": 1
 }
 
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."

@@ -10,7 +10,7 @@ from PIL import Image, ImageFilter
 from constants import *
 import pixel_utils
 from utils import Option
-from options import options
+from options import gen_options
 
 skeys = {
     "hue": pixel_utils.hue,
@@ -28,9 +28,9 @@ class PixelSort:
         self.img = None
         self.logger = None
 
-        self.options = options
+        self.options = gen_options()
 
-        self.skey = skeys[self.settings["skey_choice"]]
+        self.skey = skeys[self.options.sk.default]
 
         self.img_size = [0,0]
         self.img_filename = ""
@@ -101,75 +101,28 @@ class PixelSort:
         """
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
 
-        arg_parser.add_argument("-ll", choices=LOGLEVEL_CHOICES+AUX_LL_CHOICES,
-                                default=DEFAULTS["loglevel"],dest="loglevel",
-                                help=HELP_LOGLEVEL, metavar="loglevel")
-
         arg_parser.add_argument("input_path", help=HELP_INPUT_PATH)
-        arg_parser.add_argument("-o", default=DEFAULTS["output_path"],
-                                dest="output_path", help=HELP_OUTPUT_PATH,
-                                metavar="output_path")
-        arg_parser.add_argument("-f", choices=FORMAT_CHOICES,
-                                default=DEFAULTS["format"], dest="format",
-                                help=HELP_FORMAT, metavar="format")
 
-        arg_parser.add_argument("-sg", choices=SEGMENTATION_CHOICES,
-                                default=DEFAULTS["segmentation"],
-                                dest="segmentation", help=HELP_SEGMENTATION,
-                                metavar="segmentation")
-        arg_parser.add_argument("-sk", choices=SKEY_CHOICES, 
-                                default=DEFAULTS["skey_choice"],
-                                dest="skey_choice", help=HELP_SKEY,
-                                metavar="skey_choice")
+        for option in self.options[1:]:
+            if option.option_type == 0:
+                arg_parser.add_argument(f"-{option.short}", f"--{option.name}",
+                                        action="store_true", help=option.help,
+                                        dest=option.short)
 
-        arg_parser.add_argument("-t", default=DEFAULTS["threshold_arg"],
-                                dest="threshold_arg", help=HELP_THRESHOLD,
-                                metavar="threshold_arg")
-        arg_parser.add_argument("-a", default=DEFAULTS["angle_arg"],
-                                dest="angle_arg", help=HELP_ANGLE,
-                                metavar="angle_arg")
-        arg_parser.add_argument("-sa", default=DEFAULTS["sangle_arg"],
-                                dest="sangle_arg", help=HELP_SANGLE,
-                                metavar="sangle_arg")
-        arg_parser.add_argument("-sz", default=DEFAULTS["size_arg"],
-                                dest="size_arg", help=HELP_SIZE,
-                                metavar="size_arg")
-        arg_parser.add_argument("-r", default=DEFAULTS["randomness_arg"],
-                                dest="randomness_arg", help=HELP_RANDOMNESS,
-                                metavar="randomness_arg")
-        arg_parser.add_argument("-l", default=DEFAULTS["length_arg"],
-                                dest="length_arg", help=HELP_LENGTH,
-                                metavar="length_arg")
-
-        arg_parser.add_argument("-sc", default=DEFAULTS["scale_arg"],
-                                dest="scale_arg", help=HELP_SCALE,
-                                metavar="scale_arg")
-        arg_parser.add_argument("-w", default=DEFAULTS["width_arg"],
-                                dest="width_arg", help=HELP_WIDTH,
-                                metavar="width_arg")
-        arg_parser.add_argument("-hg", default=DEFAULTS["height_arg"],
-                                dest="height_arg", help=HELP_HEIGHT,
-                                metavar="height_arg")
-
-        arg_parser.add_argument("-am", default=DEFAULTS["amount"],
-                                dest="amount", help=HELP_AMOUNT,
-                                metavar="amount", type=int)
-
-        arg_parser.add_argument("--sp", action="store_true", dest="second_pass",
-                                help=HELP_SECOND_PASS)
-        arg_parser.add_argument("--rev", action="store_true", dest="reverse",
-                                help=HELP_REVERSE)
-        arg_parser.add_argument("--silent", action="store_true", dest="silent",
-                                help=HELP_SILENT)
-        arg_parser.add_argument("--no-log", action="store_true", dest="nolog",
-                                help=HELP_NOLOG)
+            if option.option_type == 1:
+                arg_parser.add_argument(f"-{option.short}", f"--{option.name}",
+                                        default=option.default, 
+                                        choices=option.choices, help=option.help,
+                                        metavar=option.name, dest=option.short)
 
         args = arg_parser.parse_args()
 
-        self.loglevel = args.loglevel
+        self.loglevel = args.ll
 
         for arg in args.__dict__.keys():
-            self.settings[arg] = args.__dict__[arg]
+            option = getattr(self.options, arg)
+            option = option._replace(value=args.__dict__[arg])
+            self.options = self.options._replace(**{arg: option})
 
         self.skey = skeys[self.settings["skey_choice"]]
 
