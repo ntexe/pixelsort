@@ -9,6 +9,8 @@ from PIL import Image, ImageFilter
 
 from constants import *
 import pixel_utils
+from utils import Option
+from options import options
 
 skeys = {
     "hue": pixel_utils.hue,
@@ -26,8 +28,7 @@ class PixelSort:
         self.img = None
         self.logger = None
 
-        self.settings = DEFAULTS.copy()
-        self.ranges = RANGE_DEFAULTS.copy()
+        self.options = options
 
         self.skey = skeys[self.settings["skey_choice"]]
 
@@ -49,7 +50,7 @@ class PixelSort:
         self.setup_logging()
         self.parse_args()
 
-        self.img_filename = os.path.basename(os.path.realpath(self.settings["input_path"]))
+        self.img_filename = os.path.basename(os.path.realpath(options.input_path.value))
         self.logger.info(f"Opening image {self.img_filename}...")
 
         img = Image.open(self.settings["input_path"])
