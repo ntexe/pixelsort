@@ -26,8 +26,8 @@ options:
   -of , --output-folder
                         Output folder. If output path specified this value will be ignored.
                         Default is pixelsorted
-  -f , --format         Output image format. Available choices: png, jpg, same. Default is
-                        same.
+  -f , --format         Output image format. If output path specified this value will be
+                        ignored. Available choices: png, jpg, same. Default is same.
   -ll , --loglevel      Log level for command line. Available choices: DEBUG, INFO, WARNING,
                         ERROR, CRITICAL (lowercase is also accepted). Default is INFO
   -sg , --segmentation
