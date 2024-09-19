@@ -9,16 +9,20 @@ def gen_options():
 
     options.input_path = Option(name="input_path", short="input_path",
                                 option_type=1, help_string=HELP_INPUT_PATH, val_type=str)
-
     options.o =  Option(name="output_path", short="o", option_type=1,
                         help_string=HELP_OUTPUT_PATH, val_type=str)
     options.of = Option(name="output_folder", short="of", option_type=1,
                         default=OPTION_DEFAULTS["output_folder"],
                         help_string=HELP_OUTPUT_FOLDER, val_type=str)
+    options.f =  Option(name="format", short="f", option_type=1,
+                        default=OPTION_DEFAULTS["format"],
+                        choices=FORMAT_CHOICES, help_string=HELP_FORMAT, val_type=str)
+
     options.ll = Option(name="loglevel", short="ll", option_type=1,
                         default=OPTION_DEFAULTS["loglevel"],
                         choices=LOGLEVEL_CHOICES+AUX_LL_CHOICES, help_string=HELP_LOGLEVEL,
                         val_type=str)
+
     options.sg = Option(name="segmentation", short="sg", option_type=1,
                         default=OPTION_DEFAULTS["segmentation"],
                         choices=SEGMENTATION_CHOICES, help_string=HELP_SEGMENTATION,
@@ -26,9 +30,6 @@ def gen_options():
     options.sk = Option(name="skey_choice", short="sk", option_type=1,
                         default=OPTION_DEFAULTS["skey_choice"],
                         choices=SKEY_CHOICES, help_string=HELP_SKEY, val_type=str, show=True)
-    options.f =  Option(name="format", short="f", option_type=1,
-                        default=OPTION_DEFAULTS["format"],
-                        choices=FORMAT_CHOICES, help_string=HELP_FORMAT, val_type=str)
 
     options.t =  Option(name="threshold", short="t", option_type=1,
                         default=OPTION_DEFAULTS["threshold"], help_string=HELP_THRESHOLD,

@@ -67,6 +67,8 @@ class PixelSort:
         arg_parser.add_argument("input_path", help=HELP_INPUT_PATH)
 
         for option in self.options.__dict__.values():
+            if option.name == "input_path":
+                continue
             if option.option_type == 0:
                 arg_parser.add_argument(f"--{option.short}", f"--{option.name}",
                                         action="store_true", help=option.help_string,
