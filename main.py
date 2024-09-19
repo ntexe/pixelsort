@@ -24,6 +24,7 @@ skeys = {
 }
 
 class PixelSort:
+    """Pixelsort app class."""
     def __init__(self):
         self.img = None
         self.logger = None
@@ -38,15 +39,7 @@ class PixelSort:
         self.edge_image_data = []
 
     def main(self) -> None:
-        """
-        Main function in this class.
-
-        Parameters:
-        None
-
-        Returns:
-        None
-        """
+        """Do main work."""
         self.setup_logging()
         self.parse_args()
 
@@ -63,16 +56,8 @@ class PixelSort:
             self.process_image(i)
             self.logger.info(f"Image {i} done in {time.monotonic()-start_time:.2f} seconds.")
 
-    def setup_logging(self):
-        """
-        Function that creates and configures self.logger
-
-        Parameters:
-        None
-
-        Return:
-        None
-        """
+    def setup_logging(self) -> None:
+        """Setup logging."""
         self.logger = logging.getLogger("pixelsort")
         self.logger.setLevel("DEBUG")
 
@@ -90,15 +75,7 @@ class PixelSort:
         self.logger.addHandler(self.stream_handler)
 
     def parse_args(self) -> None:
-        """
-        Function that parses and processes command line arguments.
-
-        Parameters:
-        None
-
-        Returns:
-        None
-        """
+        """Parse command line arguments."""
         arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
 
         arg_parser.add_argument("input_path", help=HELP_INPUT_PATH)
@@ -178,20 +155,12 @@ class PixelSort:
         for option in self.options.__dict__.values():
             self.logger.debug(f"{option.name} = {option.value}")
 
-    def parse_keyframes(self, option) -> tuple:
+    def parse_keyframes(self, option: Option) -> None:
         """
-        Function that parses string with two comma-separated values and checks
-        if these values match the following expression: minv <= x <= maxv. If
-        not, raises RuntimeError.
+        Parse keyframes from value of Option object. If value is invalid, use default.
 
-        Parameters:
-        arg (str):      String to parse
-        arg_name (str): Name of argument (used for RuntimeError text)
-        minv (float):   Minimum of each value
-        maxv (float):   Maximum of each value
-
-        Returns:
-        tuple:          Tuple with two float values
+        :param option: Option object
+        :type option: Option
         """
 
         if not option.isvariable:
@@ -227,66 +196,62 @@ class PixelSort:
 
         option.keyframes = (start, end)
 
-    def get_balance(self, v: tuple, i:int, max_i:int) -> float:
+    def get_balance(self, option: Option, i: int, max_i: int) -> float:
         """
-        Function that mixes two values minv and maxv with ratio i:(max_i/2)
+        Get keyframes from Option object and return calculated value.
 
-        Parameters:
-        v (tuple):   Tuple with two float values
-        i (int):     Argument used for ratio
-        max_i (int): Argument used for ratio. Must be greater than or equal to i
+        :param option: Option object
+        :type option: Option
+        :param i: First value for ratio
+        :type i: int
+        :param max_i: Second value for ratio
+        :type max_i: int
 
-        Returns:
-        float:       Mixed value
-        """
-        return (v[0]*(max(1, max_i-1)-(i-1)) + v[1]*(i-1))/max(1, max_i-1)
-
-    def calc_dims(self, dims:tuple, sort_params) -> tuple:
-        """
-        Function to calculate dimensions of new image.
-
-        Parameters:
-        dims (tuple):     Tuple of original dimensions
-        scale (float):    Scale argument
-        arg_dims (tuple): Tuple of width and height arguments
-
-        Returns:
-        tuple:            Tuple of new dimensions
+        :returns: Calculated value
+        :rtype: float
         """
 
-        # TODO: cleanup
+        ratio = (i-1)/max(1, max_i-1)
 
-        new_width, new_height = dims
+        return option.keyframes[0]*(1-ratio) + option.keyframes[1]*ratio
+
+    def calc_dims(self, sort_params: SortParams) -> tuple:
+        """
+        Calculate and return new dimensions of image.
+
+        :param sort_params: SortParams object
+        :type sort_params: SortParams
+
+        :returns: New dimensions of image
+        :rtype: tuple
+        """
+
+        new_width, new_height = self.img_size
 
         if sort_params.w != 0 or sort_params.hg != 0: # if width or height nonzero
-            if sort_params.w != 0:
+            if sort_params.w == 0:
+                new_width = round((self.img_size[0] / self.img_size[1]) * sort_params.hg)
+            else: # width is nonzero
                 new_width = sort_params.w
 
-                if sort_params.hg == 0:
-                    new_height = round((dims[1] / dims[0]) * sort_params.w)
-
-            if sort_params.hg != 0:
+            if sort_params.hg == 0:
+                new_height = round((self.img_size[1] / self.img_size[0]) * sort_params.w)
+            else: # height is nonzero
                 new_height = sort_params.hg
-
-                if sort_params.w == 0:
-                    new_width = round((dims[0] / dims[1]) * sort_params.hg)
 
             return (new_width, new_height)
 
         if sort_params.sc != 1: # if scale is not one
-            new_width, new_height = round(dims[0]*sort_params.sc), round(dims[1]*sort_params.sc)
+            new_width, new_height = round(self.img_size[0]*sort_params.sc), round(self.img_size[1]*sort_params.sc)
 
         return (new_width, new_height)
 
     def process_image(self, i: int) -> None:
         """
-        Function to process image. 
+        Process image.
 
-        Parameters:
-        i (int): Number of image
-
-        Returns:
-        None
+        :param i: Number of image
+        :type i: int
         """
         sort_params = SortParams()
         sp_sort_params = SortParams()
@@ -297,7 +262,7 @@ class PixelSort:
 
         for option in self.options.__dict__.values():
             if option.isvariable:
-                setattr(sort_params, option.short, round(self.get_balance(option.keyframes, i, self.options.am.value), 3 if option.val_type == float else None))
+                setattr(sort_params, option.short, round(self.get_balance(option, i, self.options.am.value), 3 if option.val_type == float else None))
                 # copy sort_params to sp_sort_params
                 setattr(sp_sort_params, option.short, getattr(sort_params, option.short))
                 # log parameters
@@ -306,7 +271,8 @@ class PixelSort:
         sp_sort_params.a = sort_params.a+sort_params.sa
 
         # resize
-        new_dims = self.calc_dims(self.img.size, sort_params)
+        self.img_size = self.img.size
+        new_dims = self.calc_dims(sort_params)
         self.logger.debug(f"Resizing image to {new_dims[0]}x{new_dims[1]}...")
         rimg = self.img.resize(new_dims)
         self.img_size = new_dims
@@ -350,7 +316,7 @@ class PixelSort:
             rimg = rimg.rotate(-sp_sort_params.a, expand=True)
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
-        filename = self.generate_filename(self.img_filename, sort_params, i)
+        filename = self.generate_filename(sort_params, i)
 
         self.logger.info(f"Saving to {filename}...")
 
@@ -359,13 +325,12 @@ class PixelSort:
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """
-        Function that calculates returns crop rectangle.
+        Calculate crop rectangle.
 
-        Parameters:
-        rimg_size (tuple): Tuple with bigger image width and height
-
-        Returns:
-        tuple: Tuple containing crop rectange values
+        :param rimg_size: Tuple with bigger image width and height
+        :type rimg_size: tuple
+        :returns: Crop rectangle
+        :rtype: tuple
         """
 
         return ((rimg_size[0]/2)-(self.img_size[0]/2),
@@ -373,68 +338,67 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_filename(self, fn: str, sp, i: int) -> str:
+    def generate_filename(self, sort_params: SortParams, i: int) -> str:
         """
-        Function that generates and returns filename for output image.
+        Generate and return filename for output image.
 
-        Parameters:
-        fn (str):           Input image file name
-        sp (dict): Sort parameters
-        i (int):            Number of image
-
-        Returns:
-        filename (str): Output file name
+        :param sort_params: SortParams object
+        :type sort_params: SortParams
+        :param i: Image number
+        :type i: int
+        :returns: Output file name
+        :rtype: str
         """
 
         if self.options.o.value:
             return self.options.o.value
 
-        filename = fn.split(".")[0]
+        splitted = self.img_filename.split(".")
+        filename = ".".join(splitted[:-1])
 
         for option in self.options.__dict__.values():
             if option.show and option.value != option.default:
                 if option.isvariable:
-                    filename += f"_{option.short}_{getattr(sp, option.short)}"
+                    filename += f"_{option.short}_{getattr(sort_params, option.short)}"
                 elif option.val_type == bool:
                     filename += f"_{option.short}"
                 else:
                     filename += f"_{option.short}_{option.value}"
 
         filename += f"_{i:04}"
-        filename += f".{fn.split('.')[-1] if self.options.f.value == 'same' else self.options.f.value}"
+        filename += f".{splitted[-1] if self.options.f.value == 'same' else self.options.f.value}"
 
         return filename
 
-    def sort_image(self, sp: dict, rimg_size: tuple) -> None:
+    def sort_image(self, sort_params: SortParams, rimg_size: tuple) -> None:
         """
-        Function that sorts image.
+        Sort image.
 
-        Parameters:
-        sp (dict):         Sorting parameters
-        rimg_size (tuple): Processed image size
-
-        Returns:
-        None
+        :param sort_params: SortParams object
+        :type sort_params: SortParams
+        :param rimg_size: Image size
+        :type rimg_size: tuple
         """
+
+        t = sort_params.t
+        a = sort_params.a
+        sz = sort_params.sz
+        r = sort_params.r
+        l = sort_params.l
 
         x1, y1 = 0, 0
 
-        sin_alpha = math.sin(math.radians(sp.a%90))
-        sin_beta = math.sin(math.radians(90-(sp.a%90)))
+        sin_alpha = math.sin(math.radians(a%90))
+        sin_beta = math.sin(math.radians(90-(a%90)))
 
-        x1 = self.img_size[(sp.a//90)%2]*sin_beta
-        y1 = self.img_size[(sp.a//90)%2]*sin_alpha
+        x1 = self.img_size[(a//90)%2]*sin_beta
+        y1 = self.img_size[(a//90)%2]*sin_alpha
         x2 = rimg_size[0]-x1
         y2 = rimg_size[1]-y1
 
         chunky_offset = 0
 
         sg = self.options.sg.value
-        t = sp.t
-        a = sp.a
-        sz = sp.sz
-        r = sp.r
-        l = sp.l
         re = self.options.re.value
 
         for y in range(rimg_size[1]):
@@ -445,7 +409,7 @@ class PixelSort:
 
             full_row = self.image_data[yoffset:yoffset+rimg_size[0]]
 
-            if sp.a % 90 != 0:
+            if a % 90 != 0:
                 start_x = round(max(x1-(y/sin_alpha)*sin_beta, x2-((rimg_size[1]-y)/sin_beta)*sin_alpha))
                 end_x = round(min(x1+(y/sin_beta)*sin_alpha, x2+((rimg_size[1]-y)/sin_alpha)*sin_beta))
 
