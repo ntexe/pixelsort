@@ -267,17 +267,14 @@ class PixelSort:
         self.logger.debug(f"Rotating image by {sort_params.a} degrees...")
         rimg = rimg.rotate(sort_params.a, expand=True)
 
-        # edge detection
-        if self.options.sg.value == "edge":
-            self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
-            self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
-
         # first pass sorting
         self.logger.info("Sorting image...")
+
         sorting_engine = SortingEngine(sort_params, self.options)
         sorting_engine.set_image(rimg)
         sorting_engine.set_og_image_size(self.img_size)
         sorting_engine.sort_image()
+
         self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
         # rotate back
@@ -362,50 +359,6 @@ class PixelSort:
         filename += f".{splitted[-1] if self.options.f.value == 'same' else self.options.f.value}"
 
         return filename
-
-    def sort_image(self, sort_params: SortParams, rimg_size: tuple) -> None:
-        """
-        Sort image.
-
-        :param sort_params: SortParams object
-        :type sort_params: SortParams
-        :param rimg_size: Image size
-        :type rimg_size: tuple
-        """
-
-        for y in range(rimg_size[1]):
-            start_x = 0
-            end_x = rimg_size[0]
-
-            yoffset = y*rimg_size[0]
-
-            full_row = self.image_data[yoffset:yoffset+rimg_size[0]]
-
-            if a % 90 != 0:
-                start_x = round(max(x1-(y/sin_alpha)*sin_beta, x2-((rimg_size[1]-y)/sin_beta)*sin_alpha))
-                end_x = round(min(x1+(y/sin_beta)*sin_alpha, x2+((rimg_size[1]-y)/sin_alpha)*sin_beta))
-
-            row = full_row[start_x:end_x]
-
-            if len(row) < 2:
-                continue
-
-            if sg == "none":
-                sorting.none_sort(self, row, re)
-
-            if sg == "edge":
-                sorting.edge_sort(self, row, yoffset, start_x, end_x, t, re)
-
-            if sg == "melting":
-                sorting.melting_sort(self, row, sz, re)
-
-            if sg == "blocky":
-                sorting.blocky_sort(self, row, y, start_x, end_x, sz, r, re)
-
-            if sg == "chunky":
-                sorting.chunky_sort(self, row, l, r, re)
-            
-            self.image_data[yoffset+start_x:yoffset+end_x] = row
 
 if __name__ == "__main__":
     app = PixelSort()

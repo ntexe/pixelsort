@@ -74,6 +74,15 @@ class SortingEngine:
         if self.options.sg.value == "edge":
             self.edge_sort()
 
+        if self.options.sg.value == "melting":
+            self.melting_sort()
+
+        if self.options.sg.value == "blocky":
+            self.blocky_sort()
+
+        if self.options.sg.value == "chunky":
+            self.chunky_sort()
+
         self.image.putdata(self.image_data)
 
     def none_sort(self):
@@ -109,50 +118,82 @@ class SortingEngine:
 
             self.image_data[start:end] = row
 
-    def melting_sort(self, row, sz, re):
-        width = sz*self.img_size[0]*(1-(0.5*(random.random()+0.5)))
+    def melting_sort(self):
+        sz = self.sort_params.sz
 
-        x = 0
-        while x < len(row):
-            last_x = round(x)
-            x += width*random.random() if x == 0 else width
+        for y in range(self.image_size[1]):
+            rstart, rend, start, end = self.calc_bounds(y)
 
-            row[last_x:round(x)] = sorted(row[last_x:round(x)], key=self.skey,
-                                    reverse=re)
+            row = self.image_data[start:end]
+            width = sz*self.og_image_size[0]*(1-(0.5*(random.random()+0.5)))
 
-    def blocky_sort(self, row, y, start_x, end_x, sz, r, re):
-        block_size = sz*self.img_size[0]
-        offset = round(block_size*r*(random.random() - 0.5))
+            x = 0
+            while x < len(row):
+                last_x = round(x)
+                x += width*random.random() if x == 0 else width
 
-        x = (start_x//block_size)*block_size
-        first_iter = True
+                row[last_x:round(x)] = sorted(row[last_x:round(x)], key=self.skey, reverse=self.re)
 
-        while x < end_x:
-            last_x = max(round(x)-start_x, 0)
+            self.image_data[start:end] = row
 
-            x += block_size + offset * first_iter
-            x = max(x, start_x)
+    def blocky_sort(self):
+        sz = self.sort_params.sz
+        r = self.sort_params.r
 
-            if max(0, end_x-x) <= -offset+1:
-                x -= offset
+        for y in range(self.image_size[1]):
+            rstart, rend, start, end = self.calc_bounds(y)
 
-            row[last_x:round(x)-start_x] = sorted(row[last_x:round(x)-start_x], key=self.skey,
-                                    reverse=(y//block_size)%2 != re)
+            row = self.image_data[start:end]
 
-            first_iter = False
+            block_size = sz*self.og_image_size[0]
+            offset = round(block_size*r*(random.random() - 0.5))
 
-    def chunky_sort(self, row, l, r, re):
-        offset = 0
-        x = -(l-self.chunky_offset)
+            x = (rstart//block_size)*block_size
+            first_iter = True
 
-        while x < len(row):
-            last_offset = offset
-            offset = round(l*r*(random.random() - 0.5))
+            while x < rend:
+                last_x = max(round(x)-rstart, 0)
 
-            last_x = max(x, 0)
-            x += l
+                x += block_size + offset * first_iter
+                x = max(x, rstart)
 
-            row[last_x+last_offset:x+offset] = sorted(row[last_x+last_offset:x+offset], key=self.skey,
-                                    reverse=re)
+                if max(0, rend-x) <= -offset+1:
+                    x -= offset
 
-        self.chunky_offset = (((((len(row) - self.chunky_offset) // l)+1) * l) + self.chunky_offset) % len(row)
+                row[last_x:round(x)-rstart] = sorted(row[last_x:round(x)-rstart], key=self.skey,
+                                        reverse=(y//block_size)%2 != self.re)
+
+                first_iter = False
+
+            self.image_data[start:end] = row
+
+    def chunky_sort(self):
+        l = self.sort_params.l
+        r = self.sort_params.r
+
+        chunky_offset = 0
+
+        for y in range(self.image_size[1]):
+            rstart, rend, start, end = self.calc_bounds(y)
+
+            if rend-rstart < 2:
+                continue
+
+            row = self.image_data[start:end]
+
+            offset = 0
+            x = -(l-chunky_offset)
+
+            while x < len(row):
+                last_offset = offset
+                offset = round(l*r*(random.random() - 0.5))
+
+                last_x = max(x, 0)
+                x += l
+
+                row[last_x+last_offset:x+offset] = sorted(row[last_x+last_offset:x+offset], key=self.skey,
+                                        reverse=self.re)
+
+            chunky_offset = (((((len(row) - chunky_offset) // l)+1) * l) + chunky_offset) % len(row)
+
+            self.image_data[start:end] = row
