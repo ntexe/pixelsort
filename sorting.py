@@ -8,17 +8,6 @@ import pixel_utils
 from options import Options
 from utils import SortParams
 
-skeys = {
-    "hue": pixel_utils.hue,
-    "lightness": pixel_utils.lightness,
-    "saturation": pixel_utils.saturation,
-    "min_value": pixel_utils.min_value,
-    "max_value": pixel_utils.max_value,
-    "red": pixel_utils.red,
-    "green": pixel_utils.green,
-    "blue": pixel_utils.blue,
-}
-
 class SortingEngine:
     def __init__(self, sort_params: SortParams, options: Options):
         self.sort_params = sort_params
@@ -65,23 +54,10 @@ class SortingEngine:
 
         self.chunky_offset = 0
 
-        self.skey = skeys[self.options.sk.value]
+        self.skey = getattr(pixel_utils, self.options.sk.value)
         self.re = self.options.re.value
 
-        if self.options.sg.value == "none":
-            self.none_sort()
-
-        if self.options.sg.value == "edge":
-            self.edge_sort()
-
-        if self.options.sg.value == "melting":
-            self.melting_sort()
-
-        if self.options.sg.value == "blocky":
-            self.blocky_sort()
-
-        if self.options.sg.value == "chunky":
-            self.chunky_sort()
+        getattr(self, self.options.sg.value+"_sort")()
 
         self.image.putdata(self.image_data)
 
