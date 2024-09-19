@@ -21,10 +21,7 @@ class PixelSort:
 
         self.options = gen_options()
 
-        self.img_size = [0,0]
         self.img_filename = ""
-        self.image_data = []
-        self.edge_image_data = []
 
     def main(self) -> None:
         """Do main work."""
@@ -288,17 +285,15 @@ class PixelSort:
             # rotate
             self.logger.debug(f"Rotating image by {sp_sort_params.a} degrees...")
             rimg = rimg.rotate(sp_sort_params.a, expand=True)
-
-            # edge detection
-            if self.options.sg.value == "edge":
-                self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
-                self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
             
             # second pass sorting
             self.logger.info("Second pass sorting...")
-            self.image_data = list(rimg.getdata())
-            self.sort_image(sp_sort_params, rimg.size)
-            rimg.putdata(self.image_data)
+
+            sorting_engine = SortingEngine(sp_sort_params, self.options)
+            sorting_engine.set_image(rimg)
+            sorting_engine.set_og_image_size(self.img_size)
+            sorting_engine.sort_image()
+
             self.logger.debug("Second pass sorting done.")
 
             # rotate back
@@ -319,6 +314,7 @@ class PixelSort:
 
         :param rimg_size: Tuple with bigger image width and height
         :type rimg_size: tuple
+
         :returns: Crop rectangle
         :rtype: tuple
         """
@@ -336,6 +332,7 @@ class PixelSort:
         :type sort_params: SortParams
         :param i: Image number
         :type i: int
+
         :returns: Output file name
         :rtype: str
         """
