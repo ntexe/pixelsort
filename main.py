@@ -286,12 +286,14 @@ class PixelSort:
             self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
             self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
 
+        # first pass sorting
         self.logger.info("Sorting image...")
         self.image_data = list(rimg.getdata())
         self.sort_image(sort_params, rimg.size)
         rimg.putdata(self.image_data)
         self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
+        # rotate back
         self.logger.debug(f"Rotating image by {-sort_params.a} degrees...")
         rimg = rimg.rotate(-sort_params.a, expand=True)
         rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
@@ -299,19 +301,23 @@ class PixelSort:
         if self.options.sp.value:
             self.logger.info("Second pass preparing...")
 
+            # rotate
             self.logger.debug(f"Rotating image by {sp_sort_params.a} degrees...")
             rimg = rimg.rotate(sp_sort_params.a, expand=True)
 
+            # edge detection
             if self.options.sg.value == "edge":
                 self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
                 self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
             
+            # second pass sorting
             self.logger.info("Second pass sorting...")
             self.image_data = list(rimg.getdata())
             self.sort_image(sp_sort_params, rimg.size)
             rimg.putdata(self.image_data)
             self.logger.debug("Second pass sorting done.")
 
+            # rotate back
             self.logger.debug(f"Rotating image by {-sp_sort_params.a} degrees...")
             rimg = rimg.rotate(-sp_sort_params.a, expand=True)
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
