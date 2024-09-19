@@ -11,17 +11,7 @@ from constants import *
 import pixel_utils
 from utils import Option, SortParams
 from options import Options, gen_options
-
-skeys = {
-    "hue": pixel_utils.hue,
-    "lightness": pixel_utils.lightness,
-    "saturation": pixel_utils.saturation,
-    "min_value": pixel_utils.min_value,
-    "max_value": pixel_utils.max_value,
-    "red": pixel_utils.red,
-    "green": pixel_utils.green,
-    "blue": pixel_utils.blue,
-}
+from sorting import SortingEngine
 
 class PixelSort:
     """Pixelsort app class."""
@@ -31,12 +21,7 @@ class PixelSort:
 
         self.options = gen_options()
 
-        self.skey = skeys[self.options.sk.default]
-
-        self.img_size = [0,0]
         self.img_filename = ""
-        self.image_data = []
-        self.edge_image_data = []
 
     def main(self) -> None:
         """Do main work."""
@@ -104,8 +89,6 @@ class PixelSort:
         # apply args to options object
         for option in self.options.__dict__.values():
             setattr(option, "value", args.__dict__[option.short])
-
-        self.skey = skeys[self.options.sk.value]
 
         # change options of logging
         self.stream_handler.setLevel(self.options.ll.value.upper())
@@ -281,16 +264,14 @@ class PixelSort:
         self.logger.debug(f"Rotating image by {sort_params.a} degrees...")
         rimg = rimg.rotate(sort_params.a, expand=True)
 
-        # edge detection
-        if self.options.sg.value == "edge":
-            self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
-            self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
-
         # first pass sorting
         self.logger.info("Sorting image...")
-        self.image_data = list(rimg.getdata())
-        self.sort_image(sort_params, rimg.size)
-        rimg.putdata(self.image_data)
+
+        sorting_engine = SortingEngine(sort_params, self.options)
+        sorting_engine.set_image(rimg)
+        sorting_engine.set_og_image_size(self.img_size)
+        sorting_engine.sort_image()
+
         self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
         # rotate back
@@ -304,17 +285,15 @@ class PixelSort:
             # rotate
             self.logger.debug(f"Rotating image by {sp_sort_params.a} degrees...")
             rimg = rimg.rotate(sp_sort_params.a, expand=True)
-
-            # edge detection
-            if self.options.sg.value == "edge":
-                self.logger.debug("Creating new image with FIND_EDGES filter for edge detecting...")
-                self.edge_image_data = list(rimg.filter(ImageFilter.FIND_EDGES).getdata())
             
             # second pass sorting
             self.logger.info("Second pass sorting...")
-            self.image_data = list(rimg.getdata())
-            self.sort_image(sp_sort_params, rimg.size)
-            rimg.putdata(self.image_data)
+
+            sorting_engine = SortingEngine(sp_sort_params, self.options)
+            sorting_engine.set_image(rimg)
+            sorting_engine.set_og_image_size(self.img_size)
+            sorting_engine.sort_image()
+
             self.logger.debug("Second pass sorting done.")
 
             # rotate back
@@ -335,6 +314,7 @@ class PixelSort:
 
         :param rimg_size: Tuple with bigger image width and height
         :type rimg_size: tuple
+
         :returns: Crop rectangle
         :rtype: tuple
         """
@@ -352,6 +332,7 @@ class PixelSort:
         :type sort_params: SortParams
         :param i: Image number
         :type i: int
+
         :returns: Output file name
         :rtype: str
         """
@@ -375,121 +356,6 @@ class PixelSort:
         filename += f".{splitted[-1] if self.options.f.value == 'same' else self.options.f.value}"
 
         return filename
-
-    def sort_image(self, sort_params: SortParams, rimg_size: tuple) -> None:
-        """
-        Sort image.
-
-        :param sort_params: SortParams object
-        :type sort_params: SortParams
-        :param rimg_size: Image size
-        :type rimg_size: tuple
-        """
-
-        t = sort_params.t
-        a = sort_params.a
-        sz = sort_params.sz
-        r = sort_params.r
-        l = sort_params.l
-
-        x1, y1 = 0, 0
-
-        sin_alpha = math.sin(math.radians(a%90))
-        sin_beta = math.sin(math.radians(90-(a%90)))
-
-        x1 = self.img_size[(a//90)%2]*sin_beta
-        y1 = self.img_size[(a//90)%2]*sin_alpha
-        x2 = rimg_size[0]-x1
-        y2 = rimg_size[1]-y1
-
-        chunky_offset = 0
-
-        sg = self.options.sg.value
-        re = self.options.re.value
-
-        for y in range(rimg_size[1]):
-            start_x = 0
-            end_x = rimg_size[0]
-
-            yoffset = y*rimg_size[0]
-
-            full_row = self.image_data[yoffset:yoffset+rimg_size[0]]
-
-            if a % 90 != 0:
-                start_x = round(max(x1-(y/sin_alpha)*sin_beta, x2-((rimg_size[1]-y)/sin_beta)*sin_alpha))
-                end_x = round(min(x1+(y/sin_beta)*sin_alpha, x2+((rimg_size[1]-y)/sin_alpha)*sin_beta))
-
-            row = full_row[start_x:end_x]
-
-            if len(row) < 2:
-                continue
-
-            if sg == "none":
-                row.sort(key=self.skey, reverse=re)
-
-            if sg == "edge":
-                segment_begin = 0
-
-                edge_row = self.edge_image_data[yoffset+start_x:yoffset+end_x]
-
-                for x in range(len(row)):
-                    if pixel_utils.lightness(edge_row[x]) > t*255:
-                        if x - segment_begin > 1:
-                            row[segment_begin:x] = sorted(
-                                        row[segment_begin:x], key=self.skey,
-                                        reverse=re)
-
-                        segment_begin = x+1
-
-            if sg == "melting":
-                width = sz*self.img_size[0]*(1-(0.5*(random.random()+0.5)))
-
-                x = 0
-                while x < len(row):
-                    last_x = round(x)
-                    x += width*random.random() if x == 0 else width
-
-                    row[last_x:round(x)] = sorted(row[last_x:round(x)], key=self.skey,
-                                            reverse=re)
-
-            if sg == "blocky":
-                block_size = sz*self.img_size[0]
-                offset = round(block_size*r*(random.random() - 0.5))
-
-                x = (start_x//block_size)*block_size
-                first_iter = True
-
-                while x < end_x:
-                    last_x = max(round(x)-start_x, 0)
-
-                    x += block_size + offset * first_iter
-                    x = max(x, start_x)
-
-                    if max(0, end_x-x) <= -offset+1:
-                        x -= offset
-
-                    row[last_x:round(x)-start_x] = sorted(row[last_x:round(x)-start_x], key=self.skey,
-                                            reverse=(y//block_size)%2 != re)
-
-                    first_iter = False
-
-            if sg == "chunky":
-                offset = 0
-                x = -(l-chunky_offset)
-
-                while x < len(row):
-                    last_offset = offset
-                    offset = round(l*r*(random.random() - 0.5))
-
-                    last_x = max(x, 0)
-                    x += l
-
-                    row[last_x+last_offset:x+offset] = sorted(row[last_x+last_offset:x+offset], key=self.skey,
-                                            reverse=re)
-
-                chunky_offset = (((((len(row) - chunky_offset) // l)+1) * l) + chunky_offset) % len(row)
-            
-            self.image_data[yoffset+start_x:yoffset+end_x] = row
 
 if __name__ == "__main__":
     app = PixelSort()
