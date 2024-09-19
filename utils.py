@@ -4,6 +4,7 @@
 # 2 - argument can contain multiple values (list)
 
 class Option(object):
+    """Option object. Not to be confused with Options object"""
     def __init__(self, name=None, short=None, option_type=None, default=None,
                  choices=None, help_string=None, value=None, val_type=None,
                  keyframes=None, bounds=None, isvariable=False, show=False):
@@ -21,7 +22,9 @@ class Option(object):
         self.show = show # include this option to filename?
 
     def set_to_default(self):
+        """Set value to default."""
         self.value = self.default
 
 class SortParams(object):
+    """Sort parameters object."""
     pass

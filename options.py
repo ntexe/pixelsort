@@ -2,9 +2,11 @@ from constants import *
 from utils import Option
 
 class Options(object):
+    """Options object. Not to be confused with Option object."""
     pass
 
 def gen_options():
+    """Generate options."""
     options = Options()
 
     options.input_path = Option(name="input_path", short="input_path",

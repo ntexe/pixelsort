@@ -63,27 +63,29 @@ options:
   --nl, --nolog         Disable logging.
 ```
 
+<br>
+
 ### Segmentation
 #### None
 Row segmentation isn't used.
 #### Edge
-The tool detects edges and determines segments based on this data. Use -t parameter to adjust threshold.
+Segmentation is based on detected edges. Use -t parameter to adjust threshold.
 #### Melting
-Random values are used to determine segments. Use -sz argument to adjust size of the segments.
+Segmentation is based on random values. Use -sz argument to adjust size of the segments.
 #### Blocky
-This segmentation looks like "melting" segmentation but blocky. Use -sz and -r arguments to adjust size of blocks and randomness of segments' sizes.
+Segmentation is based on fixed length and sorted image looks blocky. Use -sz and -r arguments to adjust size of blocks and randomness of segments' sizes.
 #### Chunky
-Fixed length is used to determine segments. Use -l and -r arguments to adjust length and randomness of segments' sizes.
+This segmentation is also based on fixed length, but user can change that length. Use -l and -r arguments to adjust length and randomness of segments' sizes.
 
 <br>
 
 ### Sorting keys
 #### Hue, saturation and lightness
-Color is converted to HSL and pixels in segments are sorted by hue, saturation or lightness.
+Color is converted to HSL and pixels are sorted by hue, saturation or lightness.
 #### min_value and max_value
-Pixels in segments are sorted by minimum or maximum value of red, green or blue color.
+Pixels are sorted by minimum or maximum value of pixel.
 #### Red, green and blue
-Pixels in segments are sorted by value of red, green or blue color.
+Pixels are sorted by red, green or blue color.
 
 <br>
 

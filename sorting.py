@@ -9,6 +9,7 @@ from options import Options
 from utils import SortParams
 
 class SortingEngine:
+    """Sorting engine class."""
     def __init__(self, sort_params: SortParams, options: Options):
         self.sort_params = sort_params
         self.options = options
@@ -21,14 +22,24 @@ class SortingEngine:
 
         self.skey = None
 
-    def set_image(self, image: Image):
+    def set_image(self, image: Image) -> None:
+        """Set image"""
         self.image = image
 
-    def set_og_image_size(self, og_image_size: tuple):
+    def set_og_image_size(self, og_image_size: tuple) -> None:
+        """Set original image size"""
         self.og_image_size = og_image_size
 
     @cache
     def calc_bounds(self, y: int) -> tuple:
+        """
+        Calculate bounds for sorting. It prevents sorting black parts of image when angle is nonzero.
+
+        :param y: Current y
+        :type y: int
+        :returns: Relative left bound, relative right bound, start index and end index.
+        :rtype: tuple
+        """
         start = 0
         end = self.image_size[0]
 
@@ -40,7 +51,7 @@ class SortingEngine:
 
         return (start, end, yoffset+start, yoffset+end)
 
-    def sort_image(self):
+    def sort_image(self) -> :
         self.image_data = list(self.image.getdata())
         self.image_size = self.image.size
 
@@ -57,11 +68,13 @@ class SortingEngine:
         self.skey = getattr(pixel_utils, self.options.sk.value)
         self.re = self.options.re.value
 
+        # execute sort method
         getattr(self, self.options.sg.value+"_sort")()
 
         self.image.putdata(self.image_data)
 
     def none_sort(self):
+        """Sort with none segmentation."""
         for y in range(self.image_size[1]):
             # rstart, rend - relative x
             # start, end - absolute x
@@ -73,6 +86,7 @@ class SortingEngine:
             # it works faster than accessing self.image_data directly
 
     def edge_sort(self):
+        """Sort with edge segmentation."""
         self.edge_image_data = list(self.image.filter(ImageFilter.FIND_EDGES).getdata())
 
         t = self.sort_params.t
@@ -95,6 +109,7 @@ class SortingEngine:
             self.image_data[start:end] = row
 
     def melting_sort(self):
+        """Sort with melting segmentation."""
         sz = self.sort_params.sz
 
         for y in range(self.image_size[1]):
@@ -113,6 +128,7 @@ class SortingEngine:
             self.image_data[start:end] = row
 
     def blocky_sort(self):
+        """Sort with blocky segmentation."""
         sz = self.sort_params.sz
         r = self.sort_params.r
 
@@ -144,6 +160,7 @@ class SortingEngine:
             self.image_data[start:end] = row
 
     def chunky_sort(self):
+        """Sort with chunky segmentation."""
         l = self.sort_params.l
         r = self.sort_params.r
 
