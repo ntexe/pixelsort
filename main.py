@@ -11,18 +11,7 @@ from constants import *
 import pixel_utils
 from utils import Option, SortParams
 from options import Options, gen_options
-import sorting
-
-skeys = {
-    "hue": pixel_utils.hue,
-    "lightness": pixel_utils.lightness,
-    "saturation": pixel_utils.saturation,
-    "min_value": pixel_utils.min_value,
-    "max_value": pixel_utils.max_value,
-    "red": pixel_utils.red,
-    "green": pixel_utils.green,
-    "blue": pixel_utils.blue,
-}
+from sorting import SortingEngine
 
 class PixelSort:
     """Pixelsort app class."""
@@ -31,8 +20,6 @@ class PixelSort:
         self.logger = None
 
         self.options = gen_options()
-
-        self.skey = skeys[self.options.sk.default]
 
         self.img_size = [0,0]
         self.img_filename = ""
@@ -105,8 +92,6 @@ class PixelSort:
         # apply args to options object
         for option in self.options.__dict__.values():
             setattr(option, "value", args.__dict__[option.short])
-
-        self.skey = skeys[self.options.sk.value]
 
         # change options of logging
         self.stream_handler.setLevel(self.options.ll.value.upper())
@@ -289,9 +274,10 @@ class PixelSort:
 
         # first pass sorting
         self.logger.info("Sorting image...")
-        self.image_data = list(rimg.getdata())
-        self.sort_image(sort_params, rimg.size)
-        rimg.putdata(self.image_data)
+        sorting_engine = SortingEngine(sort_params, self.options)
+        sorting_engine.set_image(rimg)
+        sorting_engine.set_og_image_size(self.img_size)
+        sorting_engine.sort_image()
         self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
         # rotate back
@@ -386,27 +372,6 @@ class PixelSort:
         :param rimg_size: Image size
         :type rimg_size: tuple
         """
-
-        t = sort_params.t
-        a = sort_params.a
-        sz = sort_params.sz
-        r = sort_params.r
-        l = sort_params.l
-
-        x1, y1 = 0, 0
-
-        sin_alpha = math.sin(math.radians(a%90))
-        sin_beta = math.sin(math.radians(90-(a%90)))
-
-        x1 = self.img_size[(a//90)%2]*sin_beta
-        y1 = self.img_size[(a//90)%2]*sin_alpha
-        x2 = rimg_size[0]-x1
-        y2 = rimg_size[1]-y1
-
-        self.chunky_offset = 0
-
-        sg = self.options.sg.value
-        re = self.options.re.value
 
         for y in range(rimg_size[1]):
             start_x = 0
