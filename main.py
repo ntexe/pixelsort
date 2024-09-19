@@ -4,6 +4,7 @@ import math
 import os
 import time
 import random
+from pathlib import Path
 
 from PIL import Image, ImageFilter
 
@@ -21,15 +22,15 @@ class PixelSort:
 
         self.options = gen_options()
 
-        self.img_filename = ""
+        self.img_path = ""
 
     def main(self) -> None:
         """Do main work."""
         self.setup_logging()
         self.parse_args()
 
-        self.img_filename = os.path.basename(os.path.realpath(self.options.input_path.value))
-        self.logger.info(f"Opening image {self.img_filename}...")
+        self.img_path = Path(self.options.input_path.value)
+        self.logger.info(f"Opening image {self.img_path.name}...")
 
         img = Image.open(self.options.input_path.value)
 
@@ -73,12 +74,12 @@ class PixelSort:
 
             if option.option_type == 1:
                 if option.isvariable:
-                    arg_parser.add_argument(f"-{option.short}", f"--{option.name}",
+                    arg_parser.add_argument(f"-{option.short}", f"--{option.name.replace('_', '-')}",
                                             default=option.default, 
                                             choices=option.choices, help=option.help_string,
                                             metavar="", dest=option.short)
                 else:
-                    arg_parser.add_argument(f"-{option.short}", f"--{option.name}",
+                    arg_parser.add_argument(f"-{option.short}", f"--{option.name.replace('_', '-')}",
                                             default=option.default, 
                                             choices=option.choices, help=option.help_string,
                                             metavar="", dest=option.short, type=option.val_type)
@@ -98,6 +99,9 @@ class PixelSort:
             self.logger.removeHandler(self.file_handler)
 
         # set values to default if these values will not be used
+        if self.options.o.value:
+            self.options.of.set_to_default()
+
         if self.options.sg.value != "edge":
             self.options.t.set_to_default()
 
@@ -301,11 +305,14 @@ class PixelSort:
             rimg = rimg.rotate(-sp_sort_params.a, expand=True)
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
-        filename = self.generate_filename(sort_params, i)
+        file_path = self.generate_file_path(sort_params, i)
 
-        self.logger.info(f"Saving to {filename}...")
+        self.logger.info(f"Saving to {file_path}...")
 
-        rimg.save(filename, quality=95)
+        if (not os.path.exists(self.options.of.value)) and (not self.options.o.value):
+            os.makedirs(self.options.of.value)
+
+        rimg.save(file_path, quality=95)
         self.logger.info("Saved.")
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
@@ -324,24 +331,23 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_filename(self, sort_params: SortParams, i: int) -> str:
+    def generate_file_path(self, sort_params: SortParams, i: int) -> str:
         """
-        Generate and return filename for output image.
+        Generate and return file path for output image.
 
         :param sort_params: SortParams object
         :type sort_params: SortParams
         :param i: Image number
         :type i: int
 
-        :returns: Output file name
+        :returns: Output file path
         :rtype: str
         """
 
         if self.options.o.value:
             return self.options.o.value
 
-        splitted = self.img_filename.split(".")
-        filename = ".".join(splitted[:-1])
+        filename = self.img_path.stem
 
         for option in self.options.__dict__.values():
             if option.show and option.value != option.default:
@@ -353,9 +359,11 @@ class PixelSort:
                     filename += f"_{option.short}_{option.value}"
 
         filename += f"_{i:04}"
-        filename += f".{splitted[-1] if self.options.f.value == 'same' else self.options.f.value}"
+        filename += self.img_path.suffix if self.options.f.value == 'same' else f".{self.options.f.value}"
 
-        return filename
+        file_path = self.img_path.parent / self.options.of.value / filename
+
+        return file_path
 
 if __name__ == "__main__":
     app = PixelSort()

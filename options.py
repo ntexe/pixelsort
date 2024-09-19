@@ -12,6 +12,9 @@ def gen_options():
 
     options.o =  Option(name="output_path", short="o", option_type=1,
                         help_string=HELP_OUTPUT_PATH, val_type=str)
+    options.of = Option(name="output_folder", short="of", option_type=1,
+                        default=OPTION_DEFAULTS["output_folder"],
+                        help_string=HELP_OUTPUT_FOLDER, val_type=str)
     options.ll = Option(name="loglevel", short="ll", option_type=1,
                         default=OPTION_DEFAULTS["loglevel"],
                         choices=LOGLEVEL_CHOICES+AUX_LL_CHOICES, help_string=HELP_LOGLEVEL,
