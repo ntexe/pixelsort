@@ -73,6 +73,10 @@ class SortingEngine:
 
         self.image.putdata(self.image_data)
 
+        del self.image
+        del self.image_data
+        del self.edge_image_data
+
     def none_sort(self) -> None:
         """Sort with none segmentation."""
         for y in range(self.image_size[1]):

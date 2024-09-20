@@ -321,6 +321,9 @@ class PixelSort:
         rimg.save(file_path, quality=95)
         self.logger.info("Saved.")
 
+        del sort_params
+        del sp_sort_params
+
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """
         Calculate crop rectangle.
