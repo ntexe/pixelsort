@@ -70,7 +70,7 @@ class PixelSort:
             if option.name == "input_path":
                 continue
             if option.option_type == 0:
-                arg_parser.add_argument(f"--{option.short}", f"--{option.name}",
+                arg_parser.add_argument(f"--{option.short}", f"--{option.name.replace('_', '-')}",
                                         action="store_true", help=option.help_string,
                                         dest=option.short)
 
@@ -306,6 +306,10 @@ class PixelSort:
             self.logger.debug(f"Rotating image by {-sp_sort_params.a} degrees...")
             rimg = rimg.rotate(-sp_sort_params.a, expand=True)
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
+
+        if self.options.pr.value:
+            self.logger.debug(f"Resizing image back to {self.img.size}")
+            rimg = rimg.resize(self.img.size)
 
         file_path = self.generate_file_path(sort_params, i)
 

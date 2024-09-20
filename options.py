@@ -70,6 +70,8 @@ def gen_options():
                         help_string=HELP_SECOND_PASS, val_type=bool, show=True)
     options.re = Option(name="reverse", short="re", option_type=0, default=False,
                         help_string=HELP_REVERSE, val_type=bool, show=True)
+    options.pr = Option(name="preserve_res", short="pr", option_type=0, default=False,
+                        help_string=HELP_PRESERVE_RES, val_type=bool, show=True)
     options.sl = Option(name="silent", short="sl", option_type=0, default=False,
                         help_string=HELP_SILENT, val_type=bool)
     options.nl = Option(name="nolog", short="nl", option_type=0, default=False,
