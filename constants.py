@@ -31,7 +31,7 @@ HELP_ANGLE = f"Angle to rotate the image before sorting in degrees. Value should
 HELP_SANGLE = f"Angle for second pass. Value should be between 0 and 360. Default is {OPTION_DEFAULTS['sangle']}."
 HELP_SIZE = f"Size of \"melting\" or \"blocky\" segmentation. Value should be between 0.001 and 1. Default is {OPTION_DEFAULTS['size']}."
 HELP_RANDOMNESS = f"Randomness of \"blocky\" or \"chunky\" segmentation. Value should be between 0 and 0.5. Default is {OPTION_DEFAULTS['randomness']}."
-HELP_LENGTH = f"Length of \"chunky\" segmentation. Value should be a natural value. Default is {OPTION_DEFAULTS['length']}."
+HELP_LENGTH = f"Length of \"chunky\" segmentation. Value should be greater than or equal to 1. Default is {OPTION_DEFAULTS['length']}."
 
 HELP_SCALE = f"Rescale image before sorting. If width or height are non-zero this value will be ignored. Value should be between 0.01 and 10. Default is {OPTION_DEFAULTS['scale']}."
 HELP_WIDTH = f"Resize to width before sorting. Value should be greater than or equal to 0. If value is zero, width is calculated automatically. Default is {OPTION_DEFAULTS['width']}."

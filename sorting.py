@@ -185,10 +185,10 @@ class SortingEngine:
                 last_offset = offset
                 offset = round(l*r*(random.random() - 0.5))
 
-                last_x = max(x, 0)
+                last_x = round(max(x, 0))
                 x += l
 
-                row[last_x+last_offset:x+offset] = sorted(row[last_x+last_offset:x+offset], key=self.skey,
+                row[last_x+last_offset:round(x+offset)] = sorted(row[last_x+last_offset:round(x+offset)], key=self.skey,
                                         reverse=self.re)
 
             chunky_offset = (((((len(row) - chunky_offset) // l)+1) * l) + chunky_offset) % len(row)

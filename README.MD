@@ -12,7 +12,7 @@ pip install Pillow
 ## Usage
 ```
 usage: main.py [-h] [-o] [-of] [-f] [-ll] [-sg] [-sk] [-t] [-a] [-sa] [-sz] [-r] [-l] [-sc]
-               [-w] [-hg] [-am] [--sp] [--re] [--sl] [--nl]
+               [-w] [-hg] [-am] [--sp] [--re] [--pr] [--sl] [--nl]
                input_path
 
 PixelSort is a python tool for sorting pixels in images.
@@ -45,8 +45,8 @@ options:
                         0.001 and 1. Default is 0.05.
   -r , --randomness     Randomness of "blocky" or "chunky" segmentation. Value should be
                         between 0 and 0.5. Default is 0.
-  -l , --length         Length of "chunky" segmentation. Value should be a natural value.
-                        Default is 10.
+  -l , --length         Length of "chunky" segmentation. Value should be greater than or
+                        equal to 1. Default is 10.
   -sc , --scale         Rescale image before sorting. If width or height are non-zero this
                         value will be ignored. Value should be between 0.01 and 10. Default
                         is 1.
@@ -57,8 +57,9 @@ options:
                         equal to 0. If value is zero, height is calculated automatically.
                         Default is 0.
   -am , --amount        Amount of images. Value should be a natural value. Default is 1.
-  --sp, --second_pass   Second pass flag.
+  --sp, --second-pass   Second pass flag.
   --re, --reverse       Reverse sort flag.
+  --pr, --preserve-res  Preserve resolution.
   --sl, --silent        Make app silent in command line.
   --nl, --nolog         Disable logging.
 ```
@@ -73,9 +74,9 @@ Segmentation is based on detected edges. Use -t parameter to adjust threshold.
 #### Melting
 Segmentation is based on random values. Use -sz argument to adjust size of the segments.
 #### Blocky
-Segmentation is based on fixed length and sorted image looks blocky. Use -sz and -r arguments to adjust size of blocks and randomness of segments' sizes.
+Segmentation is based on size argument and output image looks blocky. Use -sz and -r arguments to adjust size of blocks and randomness of segments' sizes.
 #### Chunky
-This segmentation is also based on fixed length, but user can change that length. Use -l and -r arguments to adjust length and randomness of segments' sizes.
+Segmentation is based on length argument and output image looks glitchy. Use -l and -r arguments to adjust length and randomness of segments' sizes.
 
 <br>
 
@@ -95,6 +96,9 @@ You can set the "--sp" flag to "second pass" the image. After the first pass ima
 ### Animation
 You can pass two comma-separated values to threshold, angle, second pass angle, size, randomness, length, scale, width and height. If amount is greater than 1, value of parameters will range from first to second value.
 Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with angle parameter 0, 22 and 45.
+
+### Preserve resolution
+You can set the "--pr" flag to preserve original resolution of image, regardless of scale, width and height.
 
 <br>
 

@@ -50,7 +50,7 @@ def gen_options():
                         bounds=(0,0.5), val_type=float, isvariable=True, show=True)
     options.l =  Option(name="length", short="l", option_type=1,
                         default=OPTION_DEFAULTS["length"], help_string=HELP_LENGTH,
-                        bounds=(2,None), val_type=int, isvariable=True, show=True)
+                        bounds=(1,None), val_type=float, isvariable=True, show=True)
 
     options.sc = Option(name="scale", short="sc", option_type=1,
                         default=OPTION_DEFAULTS["scale"], help_string=HELP_SCALE,
