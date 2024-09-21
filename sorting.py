@@ -59,9 +59,6 @@ class SortingEngine:
         self.sin_alpha = math.sin(math.radians(self.sort_params.a%90))
         self.sin_beta = math.sin(math.radians(90-(self.sort_params.a%90)))
 
-        self.alpha_beta = self.sin_alpha/self.sin_beta
-        self.beta_alpha = self.sin_beta/self.sin_slpha
-
         self.x1 = self.og_image_size[(self.sort_params.a//90)%2]*self.sin_beta
         self.y1 = self.og_image_size[(self.sort_params.a//90)%2]*self.sin_alpha
         self.x2 = self.image_size[0]-self.x1
