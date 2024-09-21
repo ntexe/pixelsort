@@ -37,6 +37,8 @@ class PixelSort:
         self.logger.debug("Converting image to RGB...")
         self.img = img.convert("RGB")
 
+        self.sorting_engine = SortingEngine(self.options)
+
         for i in range(1, self.options.am.value+1):
             start_time = time.monotonic()
             self.process_image(i)
@@ -273,10 +275,10 @@ class PixelSort:
         # first pass sorting
         self.logger.info("Sorting image...")
 
-        sorting_engine = SortingEngine(sort_params, self.options)
-        sorting_engine.set_image(rimg)
-        sorting_engine.set_og_image_size(self.img_size)
-        sorting_engine.sort_image()
+        self.sorting_engine.set_sort_params(sort_params)
+        self.sorting_engine.set_image(rimg)
+        self.sorting_engine.set_og_image_size(self.img_size)
+        self.sorting_engine.sort_image()
 
         self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
@@ -295,10 +297,10 @@ class PixelSort:
             # second pass sorting
             self.logger.info("Second pass sorting...")
 
-            sorting_engine = SortingEngine(sp_sort_params, self.options)
-            sorting_engine.set_image(rimg)
-            sorting_engine.set_og_image_size(self.img_size)
-            sorting_engine.sort_image()
+            self.sorting_engine.set_sort_params(sp_sort_params)
+            self.sorting_engine.set_image(rimg)
+            self.sorting_engine.set_og_image_size(self.img_size)
+            self.sorting_engine.sort_image()
 
             self.logger.debug("Second pass sorting done.")
 
@@ -320,9 +322,6 @@ class PixelSort:
 
         rimg.save(file_path, quality=95)
         self.logger.info("Saved.")
-
-        del sort_params
-        del sp_sort_params
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """

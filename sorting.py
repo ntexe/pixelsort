@@ -1,4 +1,3 @@
-from functools import cache
 import math
 import random
 
@@ -10,27 +9,29 @@ from utils import SortParams
 
 class SortingEngine:
     """Sorting engine class."""
-    def __init__(self, sort_params: SortParams, options: Options):
-        self.sort_params = sort_params
+    def __init__(self, options: Options):
         self.options = options
 
         self.image = None
         self.og_image_size = (0, 0)
         self.image_size = (0, 0)
-        self.image_data = []
-        self.edge_image_data = []
+        self.image_data = None
+        self.edge_image_data = None
 
         self.skey = None
 
+    def set_sort_params(self, sort_params: SortParams):
+        """Set sort parameters."""
+        self.sort_params = sort_params
+
     def set_image(self, image: Image) -> None:
-        """Set image"""
+        """Set image."""
         self.image = image
 
     def set_og_image_size(self, og_image_size: tuple) -> None:
-        """Set original image size"""
+        """Set original image size."""
         self.og_image_size = og_image_size
 
-    @cache
     def calc_bounds(self, y: int) -> tuple:
         """
         Calculate bounds for sorting. It prevents sorting black parts of image when angle is nonzero.
@@ -58,6 +59,9 @@ class SortingEngine:
         self.sin_alpha = math.sin(math.radians(self.sort_params.a%90))
         self.sin_beta = math.sin(math.radians(90-(self.sort_params.a%90)))
 
+        self.alpha_beta = self.sin_alpha/self.sin_beta
+        self.beta_alpha = self.sin_beta/self.sin_slpha
+
         self.x1 = self.og_image_size[(self.sort_params.a//90)%2]*self.sin_beta
         self.y1 = self.og_image_size[(self.sort_params.a//90)%2]*self.sin_alpha
         self.x2 = self.image_size[0]-self.x1
@@ -73,9 +77,8 @@ class SortingEngine:
 
         self.image.putdata(self.image_data)
 
-        del self.image
-        del self.image_data
-        del self.edge_image_data
+        self.image_data = None
+        self.edge_image_data = None
 
     def none_sort(self) -> None:
         """Sort with none segmentation."""
