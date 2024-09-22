@@ -68,6 +68,20 @@ class Option(object):
         self.keyframes = (start, end)
         return res
 
+    def get_balance(self, vals: tuple):
+        """
+        Get keyframes from Option object and return calculated value.
+
+        :param vals: Values for ratio
+        :type vals: tuple
+
+        :returns: Calculated value
+        """
+
+        ratio = (vals[0]-1)/max(1, vals[1]-1)
+
+        return round(self.keyframes[0]*(1-ratio) + self.keyframes[1]*ratio, 3 if self.val_type == float else None)
+
 class SortParams(object):
     """Sort parameters object."""
     pass

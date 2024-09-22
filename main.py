@@ -147,25 +147,6 @@ class PixelSort:
         for option in self.options.__dict__.values():
             self.logger.debug(f"{option.name} = {option.value}")
 
-    def get_balance(self, option: Option, i: int, max_i: int) -> float:
-        """
-        Get keyframes from Option object and return calculated value.
-
-        :param option: Option object
-        :type option: Option
-        :param i: First value for ratio
-        :type i: int
-        :param max_i: Second value for ratio
-        :type max_i: int
-
-        :returns: Calculated value
-        :rtype: float
-        """
-
-        ratio = (i-1)/max(1, max_i-1)
-
-        return option.keyframes[0]*(1-ratio) + option.keyframes[1]*ratio
-
     def calc_dims(self, sort_params: SortParams) -> tuple:
         """
         Calculate and return new dimensions of image.
@@ -213,7 +194,7 @@ class PixelSort:
 
         for option in self.options.__dict__.values():
             if option.isvariable:
-                setattr(sort_params, option.short, round(self.get_balance(option, i, self.options.am.value), 3 if option.val_type == float else None))
+                setattr(sort_params, option.short, option.get_balance((i, self.options.am.value)))
                 # copy sort_params to sp_sort_params
                 setattr(sp_sort_params, option.short, getattr(sort_params, option.short))
                 # log parameters
