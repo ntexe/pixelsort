@@ -127,7 +127,8 @@ class PixelSort:
         for option in self.options.__dict__.values():
             # parse keyframes
             if option.isvariable:
-                self.parse_keyframes(option)
+                if option.parse_keyframes() == 1:
+                    self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
 
             # validate
             if option.bounds != None and not option.isvariable:
@@ -145,47 +146,6 @@ class PixelSort:
 
         for option in self.options.__dict__.values():
             self.logger.debug(f"{option.name} = {option.value}")
-
-    def parse_keyframes(self, option: Option) -> None:
-        """
-        Parse keyframes from value of Option object. If value is invalid, use default.
-
-        :param option: Option object
-        :type option: Option
-        """
-
-        if not option.isvariable:
-            return
-
-        splitted = str(option.value).split(",")
-
-        if len(splitted) > 2:
-            self.logger.warning(f"Too many values in {option.name} argument, will use default.")
-            option.set_to_default()
-            return (option.value,)*2
-
-        start = option.val_type(splitted[0])
-        end = option.val_type(splitted[-1])
-
-        if option.bounds[0] != None:
-            if start < option.bounds[0]:
-                self.logger.warning(f"{option.name.capitalize()} first value is too small, will use default.")
-                start = option.default
-
-            if end < option.bounds[0]:
-                self.logger.warning(f"{option.name.capitalize()} second value is too small, will use default.")
-                end = option.default
-
-        if option.bounds[1] != None:
-            if start > option.bounds[1]:
-                self.logger.warning(f"{option.name.capitalize()} first value is too big, will use default.")
-                start = option.default
-
-            if end > option.bounds[1]:
-                self.logger.warning(f"{option.name.capitalize()} second value is too big, will use default.")
-                end = option.default
-
-        option.keyframes = (start, end)
 
     def get_balance(self, option: Option, i: int, max_i: int) -> float:
         """

@@ -25,6 +25,49 @@ class Option(object):
         """Set value to default."""
         self.value = self.default
 
+    def parse_keyframes(self) -> int:
+        """
+        Parse keyframes from value of Option object.
+        If value is invalid, use default and return 1.
+        """
+
+        res = 0
+
+        if not self.isvariable:
+            res = 1
+            return
+
+        splitted = str(self.value).split(",")
+
+        if len(splitted) > 2:
+            self.set_to_default()
+            res = 1
+            return res
+
+        start = self.val_type(splitted[0])
+        end = self.val_type(splitted[-1])
+
+        if self.bounds[0] != None:
+            if start < self.bounds[0]:
+                start = self.default
+                res = 1
+
+            if end < self.bounds[0]:
+                end = self.default
+                res = 1
+
+        if self.bounds[1] != None:
+            if start > self.bounds[1]:
+                start = self.default
+                res = 1
+
+            if end > self.bounds[1]:
+                end = self.default
+                res = 1
+
+        self.keyframes = (start, end)
+        return res
+
 class SortParams(object):
     """Sort parameters object."""
     pass
