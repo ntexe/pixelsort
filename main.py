@@ -103,9 +103,6 @@ class PixelSort:
             self.logger.removeHandler(self.file_handler)
 
         # set values to default if these values will not be used
-        if self.options.o.value:
-            self.options.of.set_to_default()
-
         if self.options.sg.value != "edge":
             self.options.t.set_to_default()
 
@@ -254,12 +251,12 @@ class PixelSort:
             self.logger.debug(f"Resizing image back to {self.img.size}")
             rimg = rimg.resize(self.img.size)
 
-        file_path = self.generate_file_path(sort_params, i)
+        file_path = Path(self.generate_file_path(sort_params, i))
 
         self.logger.info(f"Saving to {file_path}...")
 
-        if (not os.path.exists(self.options.of.value)) and (not self.options.o.value):
-            os.makedirs(self.options.of.value)
+        if not os.path.exists(file_path.parent):
+            os.makedirs(file_path.parent)
 
         rimg.save(file_path, quality=95)
         self.logger.info("Saved.")
@@ -280,7 +277,7 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_file_path(self, sort_params: SortParams, i: int) -> str:
+    def generate_file_path(self, sort_params: SortParams, i: int):
         """
         Generate and return file path for output image.
 
@@ -290,13 +287,21 @@ class PixelSort:
         :type i: int
 
         :returns: Output file path
-        :rtype: str
         """
 
-        if self.options.o.value:
-            return self.options.o.value
-
+        folder = self.img_path.parent
         filename = self.img_path.stem
+
+        output_path = Path(self.options.o.value)
+
+        if output_path.suffix == "": # output argument is folder
+            folder = output_path
+        else:                        # output argument is file
+            if self.options.am.value == 1:
+                return self.options.o.value
+            else: # if amount is greater than one
+                folder = output_path.parent
+                filename = output_path.stem            
 
         for option in self.options.__dict__.values():
             if option.show and option.value != option.default:
@@ -310,7 +315,7 @@ class PixelSort:
         filename += f"_{i:04}"
         filename += self.img_path.suffix if self.options.f.value == 'same' else f".{self.options.f.value}"
 
-        file_path = self.img_path.parent / self.options.of.value / filename
+        file_path = folder / filename
 
         return file_path
 

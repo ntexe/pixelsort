@@ -8,7 +8,7 @@ SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red
 FORMAT_CHOICES = ["png", "jpg", "same"]
 
 OPTION_DEFAULTS = {
-    "output_folder": "pixelsorted", "loglevel": "INFO", "segmentation": "edge",
+    "output": "pixelsorted", "loglevel": "INFO", "segmentation": "edge",
     "skey_choice": "lightness", "format": "same", "threshold": 0.1, "angle": 0,
     "sangle": 90, "size": 0.05, "randomness": 0, "length": 10, "scale": 1,
     "width": 0, "height": 0, "amount": 1
@@ -16,9 +16,8 @@ OPTION_DEFAULTS = {
 
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
 
-HELP_INPUT_PATH = "Input image file path."
-HELP_OUTPUT_PATH = "Output image file path."
-HELP_OUTPUT_FOLDER = f"Output folder. If output path specified this value will be ignored. Default is {OPTION_DEFAULTS['output_folder']}"
+HELP_INPUT_PATH = "Input file path."
+HELP_OUTPUT = f"Output file path or folder. Default is {OPTION_DEFAULTS['output']}."
 HELP_FORMAT = f"Output image format. If output path specified this value will be ignored. Available choices: {', '.join(FORMAT_CHOICES)}. Default is {OPTION_DEFAULTS['format']}."
 
 HELP_LOGLEVEL = f"Log level for command line. Available choices: {', '.join(LOGLEVEL_CHOICES)} (lowercase is also accepted). Default is {OPTION_DEFAULTS['loglevel']}"

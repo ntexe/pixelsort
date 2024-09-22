@@ -11,11 +11,9 @@ def gen_options():
 
     options.input_path = Option(name="input_path", short="input_path",
                                 option_type=1, help_string=HELP_INPUT_PATH, val_type=str)
-    options.o =  Option(name="output_path", short="o", option_type=1,
-                        help_string=HELP_OUTPUT_PATH, val_type=str)
-    options.of = Option(name="output_folder", short="of", option_type=1,
-                        default=OPTION_DEFAULTS["output_folder"],
-                        help_string=HELP_OUTPUT_FOLDER, val_type=str)
+    options.o =  Option(name="output", short="o", option_type=1,
+                        default=OPTION_DEFAULTS["output"],
+                        help_string=HELP_OUTPUT, val_type=str)
     options.f =  Option(name="format", short="f", option_type=1,
                         default=OPTION_DEFAULTS["format"],
                         choices=FORMAT_CHOICES, help_string=HELP_FORMAT, val_type=str)
