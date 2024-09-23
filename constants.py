@@ -15,7 +15,7 @@ OPTION_DEFAULTS = {
 
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
 
-HELP_INPUT_PATH = "Input file path."
+HELP_INPUT_PATH = "Input file path or folder."
 HELP_OUTPUT = f"Output file path or folder. Default is {OPTION_DEFAULTS['output']}."
 HELP_EXT = f"Output image extension. If output path specified this value will be ignored. Default is {OPTION_DEFAULTS['ext']}."
 

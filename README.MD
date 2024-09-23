@@ -11,23 +11,20 @@ pip install Pillow
 
 ## Usage
 ```
-usage: main.py [-h] [-o] [-of] [-f] [-ll] [-sg] [-sk] [-t] [-a] [-sa] [-sz] [-r] [-l] [-sc]
-               [-w] [-hg] [-am] [--sp] [--re] [--pr] [--sl] [--nl]
+usage: main.py [-h] [-o] [-e] [-ll] [-sg] [-sk] [-t] [-a] [-sa] [-sz] [-r] [-l] [-sc] [-w]
+               [-hg] [-am] [--sp] [--re] [--pr] [--sl] [--nl]
                input_path
 
 PixelSort is a python tool for sorting pixels in images.
 
 positional arguments:
-  input_path            Input image file path.
+  input_path            Input file path or folder.
 
 options:
   -h, --help            show this help message and exit
-  -o , --output-path    Output image file path.
-  -of , --output-folder
-                        Output folder. If output path specified this value will be ignored.
-                        Default is pixelsorted
-  -f , --format         Output image format. If output path specified this value will be
-                        ignored. Available choices: png, jpg, same. Default is same.
+  -o , --output         Output file path or folder. Default is pixelsorted.
+  -e , --ext            Output image extension. If output path specified this value will be
+                        ignored. Default is same.
   -ll , --loglevel      Log level for command line. Available choices: DEBUG, INFO, WARNING,
                         ERROR, CRITICAL (lowercase is also accepted). Default is INFO
   -sg , --segmentation
@@ -89,6 +86,9 @@ Pixels are sorted by minimum or maximum value of pixel.
 Pixels are sorted by red, green or blue color.
 
 <br>
+
+### Sort every image in folder
+You can pass folder to arguments to make this script sort every image in folder.
 
 ### Second pass flag
 You can set the "--sp" flag to "second pass" the image. After the first pass image is rotated by angle specified in "-sa" argument (90 by default), the tool does second pass and rotates image back to normal.
