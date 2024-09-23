@@ -14,9 +14,9 @@ def gen_options():
     options.o =  Option(name="output", short="o", option_type=1,
                         default=OPTION_DEFAULTS["output"],
                         help_string=HELP_OUTPUT, val_type=str)
-    options.f =  Option(name="format", short="f", option_type=1,
-                        default=OPTION_DEFAULTS["format"],
-                        choices=FORMAT_CHOICES, help_string=HELP_FORMAT, val_type=str)
+    options.e =  Option(name="ext", short="e", option_type=1,
+                        default=OPTION_DEFAULTS["ext"],
+                        help_string=HELP_EXT, val_type=str)
 
     options.ll = Option(name="loglevel", short="ll", option_type=1,
                         default=OPTION_DEFAULTS["loglevel"],
