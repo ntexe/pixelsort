@@ -46,10 +46,11 @@ class PixelSort:
             exit(1)
 
         self.img_count = len(self.imgs_to_process)
+        self.img_number = 0
 
-        for i in range(1, self.img_count+1):
-            self.img_path = self.imgs_to_process[i-1]
-            self.logger.info(f"Opening image {i}/{self.img_count} {self.img_path.name}...")
+        for self.img_number in range(1, self.img_count+1):
+            self.img_path = self.imgs_to_process[self.img_number-1]
+            self.logger.info(f"Opening image {self.img_number}/{self.img_count} {self.img_path.name}...")
             img = Image.open(self.img_path)
 
             self.logger.debug("Converting image to RGB...")
@@ -59,10 +60,10 @@ class PixelSort:
             self.sorting_engine = SortingEngine(self.options)
 
             for j in range(1, self.options.am.value+1):
-                self.logger.info(f"Preparing image {i}.{j}/{i}.{self.options.am.value}...")
+                self.logger.info(f"Preparing image {self.img_number}.{j}/{self.img_number}.{self.options.am.value}...")
                 start_time = time.monotonic()
                 self.process_image(j)
-                self.logger.info(f"Image {i}.{j}/{i}.{self.options.am.value} done in {time.monotonic()-start_time:.2f} seconds.")
+                self.logger.info(f"Image {self.img_number}.{j}/{self.img_number}.{self.options.am.value} done in {time.monotonic()-start_time:.2f} seconds.")
 
     def setup_logging(self) -> None:
         """Setup logging."""
@@ -322,7 +323,7 @@ class PixelSort:
         if output_path.suffix == "": # output argument is folder
             folder = output_path
         else:                        # output argument is file
-            if self.options.am.value == 1:
+            if self.options.am.value == 1 and self.img_count == 1:
                 return self.options.o.value
             else: # if amount is greater than one
                 folder = output_path.parent
@@ -337,7 +338,7 @@ class PixelSort:
                 else:
                     filename += f"_{option.short}_{option.value}"
 
-        filename += f"_{i:04}"
+        filename += f"_{self.img_number:04}_{i:04}"
         filename += self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
 
         file_path = folder / filename
