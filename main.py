@@ -24,7 +24,8 @@ class PixelSort:
 
         self.input_path = ""
         self.supported_exts = list(Image.registered_extensions().keys())
-        self.imgs_to_process = []
+        self.ifns_to_process = [] # image filenames to process
+        self.imgs_to_process = [] # image objects to process
 
     def main(self) -> None:
         """Do main work."""
@@ -36,36 +37,50 @@ class PixelSort:
         if self.input_path.is_dir():
             for filename in os.listdir(self.input_path):
                 if Path(filename).suffix in self.supported_exts:
-                    self.imgs_to_process.append(self.input_path / filename)
+                    self.ifns_to_process.append(self.input_path / filename)
 
         elif self.input_path.is_file():
-            self.imgs_to_process = [self.input_path]
+            self.ifns_to_process = [self.input_path]
 
         else:
             self.logger.critical(f"Input path is invalid, exiting...")
             exit(1)
 
-        self.img_count = len(self.imgs_to_process)
-        self.img_number = 0
+        self.img_count = len(self.ifns_to_process)
+        img_number = 0
 
-        for self.img_number in range(1, self.img_count+1):
-            self.img_path = self.imgs_to_process[self.img_number-1]
-            self.logger.info(f"Opening image {self.img_number}/{self.img_count} {self.img_path.name}...")
+        for img_number in range(1, self.img_count+1):
+            self.img_path = self.ifns_to_process[img_number-1]
+            self.logger.info(f"Opening image {img_number}/{self.img_count} {self.img_path.name}...")
             img = Image.open(self.img_path)
 
-            for i in range(getattr(img, "n_frames", 1)):
-                img.seek(i)
-                self.logger.debug(f"Converting image {self.img_number}.{i} to RGB...")
-                self.img = img.convert("RGB")
+            if not getattr(img, "is_animated", False): # image is not animated and we have one frame to process
+                self.logger.debug(f"Converting image {self.img_path.name} to RGB...")
+                self.imgs_to_process = [img.convert("RGB")]
 
                 self.logger.debug("Initializing SortingEngine object...")
                 self.sorting_engine = SortingEngine(self.options)
 
                 for j in range(1, self.options.am.value+1):
-                    self.logger.info(f"Preparing image {self.img_number}.{i}.{j}/{self.img_number}...")
+                    self.logger.info(f"Preparing image {img_number}.{j}/{self.img_count}...")
                     start_time = time.monotonic()
-                    self.process_image(i, j)
-                    self.logger.info(f"Image {self.img_number}.{i}.{j}/{self.img_number} done in {time.monotonic()-start_time:.2f} seconds.")
+                    self.process_image(1, j)
+                    self.logger.info(f"Image {img_number}.{j}/{self.img_count} done in {time.monotonic()-start_time:.2f} seconds.")
+
+            else: # image has several frames
+                for i in range(1, getattr(img, "n_frames", 1) + 1):
+                    img.seek(i-1)
+                    self.logger.debug(f"Converting image {img_number}.{i} to RGB...")
+                    self.img = img.convert("RGB")
+
+                    self.logger.debug("Initializing SortingEngine object...")
+                    self.sorting_engine = SortingEngine(self.options)
+
+                    for j in range(1, self.options.am.value+1):
+                        self.logger.info(f"Preparing image {img_number}.{i}.{j}/{img_number}...")
+                        start_time = time.monotonic()
+                        self.process_image(i, j)
+                        self.logger.info(f"Image {img_number}.{i}.{j}/{img_number} done in {time.monotonic()-start_time:.2f} seconds.")
 
     def setup_logging(self) -> None:
         """Setup logging."""
@@ -340,7 +355,7 @@ class PixelSort:
                 else:
                     filename += f"_{option.short}_{option.value}"
 
-        filename += f"_{self.img_number:04}_{i:04}_{j:04}"
+        filename += f"_{i:04}_{j:04}"
         filename += self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
 
         file_path = folder / filename
