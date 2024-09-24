@@ -53,17 +53,19 @@ class PixelSort:
             self.logger.info(f"Opening image {self.img_number}/{self.img_count} {self.img_path.name}...")
             img = Image.open(self.img_path)
 
-            self.logger.debug("Converting image to RGB...")
-            self.img = img.convert("RGB")
+            for i in range(getattr(img, "n_frames", 1)):
+                img.seek(i)
+                self.logger.debug(f"Converting image {self.img_number}.{i} to RGB...")
+                self.img = img.convert("RGB")
 
-            self.logger.debug("Initializing SortingEngine object...")
-            self.sorting_engine = SortingEngine(self.options)
+                self.logger.debug("Initializing SortingEngine object...")
+                self.sorting_engine = SortingEngine(self.options)
 
-            for j in range(1, self.options.am.value+1):
-                self.logger.info(f"Preparing image {self.img_number}.{j}/{self.img_number}.{self.options.am.value}...")
-                start_time = time.monotonic()
-                self.process_image(j)
-                self.logger.info(f"Image {self.img_number}.{j}/{self.img_number}.{self.options.am.value} done in {time.monotonic()-start_time:.2f} seconds.")
+                for j in range(1, self.options.am.value+1):
+                    self.logger.info(f"Preparing image {self.img_number}.{i}.{j}/{self.img_number}...")
+                    start_time = time.monotonic()
+                    self.process_image(i, j)
+                    self.logger.info(f"Image {self.img_number}.{i}.{j}/{self.img_number} done in {time.monotonic()-start_time:.2f} seconds.")
 
     def setup_logging(self) -> None:
         """Setup logging."""
@@ -203,7 +205,7 @@ class PixelSort:
 
         return (new_width, new_height)
 
-    def process_image(self, i: int) -> None:
+    def process_image(self, i: int, j: int) -> None:
         """
         Process image.
 
@@ -217,7 +219,7 @@ class PixelSort:
 
         for option in self.options.__dict__.values():
             if option.isvariable:
-                setattr(sort_params, option.short, option.get_balance((i, self.options.am.value)))
+                setattr(sort_params, option.short, option.get_balance((j, self.options.am.value)))
                 # copy sort_params to sp_sort_params
                 setattr(sp_sort_params, option.short, getattr(sort_params, option.short))
                 # log parameters
@@ -277,7 +279,7 @@ class PixelSort:
             self.logger.debug(f"Resizing image back to {self.img.size}")
             rimg = rimg.resize(self.img.size)
 
-        file_path = Path(self.generate_file_path(sort_params, i))
+        file_path = Path(self.generate_file_path(sort_params, i, j))
 
         self.logger.info(f"Saving to {file_path}...")
 
@@ -303,7 +305,7 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_file_path(self, sort_params: SortParams, i: int):
+    def generate_file_path(self, sort_params: SortParams, i: int, j: int):
         """
         Generate and return file path for output image.
 
@@ -338,7 +340,7 @@ class PixelSort:
                 else:
                     filename += f"_{option.short}_{option.value}"
 
-        filename += f"_{self.img_number:04}_{i:04}"
+        filename += f"_{self.img_number:04}_{i:04}_{j:04}"
         filename += self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
 
         file_path = folder / filename
