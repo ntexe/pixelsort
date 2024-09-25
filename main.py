@@ -17,7 +17,6 @@ from sorting import SortingEngine
 class PixelSort:
     """Pixelsort app class."""
     def __init__(self):
-        self.img = None
         self.logger = None
 
         self.options = gen_options()
@@ -47,7 +46,9 @@ class PixelSort:
             exit(1)
 
         self.img_count = len(self.ifns_to_process)
-        img_number = 0
+
+        self.logger.debug("Initializing SortingEngine object...")
+        self.sorting_engine = SortingEngine(self.options)
 
         for img_number in range(1, self.img_count+1):
             self.img_path = self.ifns_to_process[img_number-1]
@@ -57,9 +58,6 @@ class PixelSort:
             if not getattr(img, "is_animated", False): # image is not animated and we have one frame to process
                 self.logger.debug(f"Converting image {self.img_path.name} to RGB...")
                 self.imgs_to_process = [img.convert("RGB")]
-
-                self.logger.debug("Initializing SortingEngine object...")
-                self.sorting_engine = SortingEngine(self.options)
 
                 for j in range(1, self.options.am.value+1):
                     self.logger.info(f"Preparing image {img_number}.{j}/{self.img_count}...")
@@ -74,37 +72,36 @@ class PixelSort:
                     self.logger.info(f"Saving to {file_path}...")
                     rimg.save(file_path, quality=95)
                     self.logger.info("Saved.")
+                    
                     self.logger.info(f"Image {img_number}.{j}/{self.img_count} done in {time.monotonic()-start_time:.2f} seconds.")
 
             else: # image has several frames
+                start_time = time.monotonic()
+
                 for i in range(1, img.n_frames+1):
                     img.seek(i-1)
                     self.logger.debug(f"Converting image {img_number}.{i} to RGB...")
-                    self.img = img.convert("RGB")
-                    self.imgs_to_process.append(self.img.copy())
-
-                self.logger.debug("Initializing SortingEngine object...")
-                self.sorting_engine = SortingEngine(self.options)
+                    self.imgs_to_process.append(img.convert("RGB").copy())
 
                 sort_params = SortParams()
+                self.options.am.value = img.n_frames
 
                 for i in range(1, img.n_frames+1):
-                    self.logger.info(f"Preparing image {img_number}.{i}/{img_number}...")
-                    start_time = time.monotonic()
+                    self.logger.info(f"Preparing image {i}/{img.n_frames}...")
                     rimg, sort_params = self.process_image(i, self.imgs_to_process[i-1])
 
                     self.imgs_to_process[i-1] = rimg.copy()
 
                 # save file
-                file_path = Path(self.generate_file_path(sort_params))
+                file_path = Path(self.generate_file_path(sort_params, i=1))
                 if not os.path.exists(file_path.parent):
                     os.makedirs(file_path.parent)
 
                 self.logger.info(f"Saving to {file_path}...")
-                self.imgs_to_process[0].save(file_path, quality=95, save_all=True, append_images=self.imgs_to_process[1:], duration=100, loop=0)
+                self.imgs_to_process[0].save(file_path, quality=95, save_all=True, append_images=self.imgs_to_process[1:])
                 self.logger.info("Saved.")
 
-                self.logger.info(f"Image {img_number}.{i}/{img_number} done in {time.monotonic()-start_time:.2f} seconds.")
+                self.logger.info(f"Image {self.img_path.name} done in {time.monotonic()-start_time:.2f} seconds.")
 
     def setup_logging(self) -> None:
         """Setup logging."""
@@ -364,7 +361,7 @@ class PixelSort:
 
         for option in self.options.__dict__.values():
             if option.show and option.value != option.default:
-                if option.isvariable:
+                if option.isvariable and not (self.options.e.value in ("same", ".gif")):
                     filename += f"_{option.short}_{getattr(sort_params, option.short)}"
                 elif option.val_type == bool:
                     filename += f"_{option.short}"
