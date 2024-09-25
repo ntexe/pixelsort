@@ -64,7 +64,16 @@ class PixelSort:
                 for j in range(1, self.options.am.value+1):
                     self.logger.info(f"Preparing image {img_number}.{j}/{self.img_count}...")
                     start_time = time.monotonic()
-                    self.process_image(1, j)
+                    rimg, sort_params = self.process_image(j, self.imgs_to_process[0])
+
+                    # save file
+                    file_path = Path(self.generate_file_path(sort_params, j=j))
+                    if not os.path.exists(file_path.parent):
+                        os.makedirs(file_path.parent)
+
+                    self.logger.info(f"Saving to {file_path}...")
+                    rimg.save(file_path, quality=95)
+                    self.logger.info("Saved.")
                     self.logger.info(f"Image {img_number}.{j}/{self.img_count} done in {time.monotonic()-start_time:.2f} seconds.")
 
             else: # image has several frames
@@ -220,12 +229,12 @@ class PixelSort:
 
         return (new_width, new_height)
 
-    def process_image(self, i: int, j: int) -> None:
+    def process_image(self, j: int, img: Image) -> tuple:
         """
         Process image.
 
-        :param i: Number of image
-        :type i: int
+        :param j: Number of image
+        :type j: int
         """
         sort_params = SortParams()
         sp_sort_params = SortParams()
@@ -243,10 +252,10 @@ class PixelSort:
         sp_sort_params.a = sort_params.a+sort_params.sa
 
         # resize
-        self.img_size = self.img.size
+        self.img_size = img.size
         new_dims = self.calc_dims(sort_params)
         self.logger.debug(f"Resizing image to {new_dims[0]}x{new_dims[1]}...")
-        rimg = self.img.resize(new_dims)
+        rimg = img.resize(new_dims)
         self.img_size = new_dims
 
         # rotate
@@ -291,18 +300,10 @@ class PixelSort:
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
         if self.options.pr.value:
-            self.logger.debug(f"Resizing image back to {self.img.size}")
-            rimg = rimg.resize(self.img.size)
+            self.logger.debug(f"Resizing image back to {img.size}")
+            rimg = rimg.resize(img.size)
 
-        file_path = Path(self.generate_file_path(sort_params, i, j))
-
-        self.logger.info(f"Saving to {file_path}...")
-
-        if not os.path.exists(file_path.parent):
-            os.makedirs(file_path.parent)
-
-        rimg.save(file_path, quality=95)
-        self.logger.info("Saved.")
+        return (rimg.copy(), sort_params)
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """
@@ -320,7 +321,7 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_file_path(self, sort_params: SortParams, i: int, j: int):
+    def generate_file_path(self, sort_params: SortParams, i: int=None, j: int=None):
         """
         Generate and return file path for output image.
 
@@ -355,7 +356,8 @@ class PixelSort:
                 else:
                     filename += f"_{option.short}_{option.value}"
 
-        filename += f"_{i:04}_{j:04}"
+        filename += f"_{i:04}" if i != None else ""
+        filename += f"_{j:04}" if j != None else ""
         filename += self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
 
         file_path = folder / filename
