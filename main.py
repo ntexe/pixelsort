@@ -57,48 +57,33 @@ class PixelSort:
             self.logger.info(f"Opening image {img_number}/{self.img_count} {self.img_path.name}...")
             img = Image.open(self.img_path)
 
-            if not getattr(img, "is_animated", False): # image is not animated and we have one frame to process
-                self.logger.debug(f"Converting image {self.img_path.name} to RGB...")
-                imgc = img.convert("RGB")
-                self.imgs_to_process = []
+            self.imgs_to_process = []
 
-                for i in range(1, self.options.am.value+1):
-                    self.logger.info(f"Preparing image {img_number}.{i}/{self.img_count}...")
-                    rimg, sort_params = self.process_image(i, imgc)
+            for i in range(1, getattr(img, "n_frames", 1)+1):
+                img.seek(i-1)
+                self.logger.debug(f"Converting image {img_number}.{i} to RGB...")
+                self.imgs_to_process.append(img.convert("RGB"))
 
-                    # save file
-                    if self.options.e.value == ".gif":
-                        self.imgs_to_process.append(rimg.copy())
-                    else: # save to multiple one frame files
-                        self.save_file(sort_params, i, [rimg])
-
-                # save file
-                if self.options.e.value == ".gif": # save to one animated file
-                    self.save_file(SortParams(), 1, self.imgs_to_process)
-
-            else: # image has several frames
-                start_time = time.monotonic()
-
-                for i in range(1, img.n_frames+1):
-                    img.seek(i-1)
-                    self.logger.debug(f"Converting image {img_number}.{i} to RGB...")
-                    self.imgs_to_process.append(img.convert("RGB").copy())
-
-                sort_params = SortParams()
+            sort_params = SortParams()
+            if getattr(img, "n_frames", 1) > 1: # set amount to n_frames, if n_frames > 1
                 self.options.am.value = img.n_frames
 
-                for i in range(1, img.n_frames+1):
-                    self.logger.info(f"Preparing image {i}/{img.n_frames}...")
-                    rimg, sort_params = self.process_image(i, self.imgs_to_process[i-1])
+            # duplicate references to the same object.
+            if len(self.imgs_to_process) < self.options.am.value:
+                self.imgs_to_process = [self.imgs_to_process[0] for i in range(self.options.am.value)]
 
-                    if self.options.e.value in (".gif", "same"):
-                        self.imgs_to_process[i-1] = rimg.copy()
-                    else: # save to multiple one frame files
-                        self.save_file(sort_params, i, [rimg])
+            for i in range(1, self.options.am.value+1):
+                self.logger.info(f"Preparing image {i}/{self.options.am.value}...")
 
-                # save file
-                if self.options.e.value in (".gif", "same"): # save to one animated file
-                    self.save_file(SortParams(), 1, self.imgs_to_process)
+                rimg, sort_params = self.process_image(i, self.imgs_to_process[i-1])
+
+                if self.get_out_ext() == ".gif":
+                    self.imgs_to_process[i-1] = rimg.copy() # we will save it later
+                else:
+                    self.save_file(sort_params, i, [rimg])
+
+            if self.get_out_ext() == ".gif":
+                self.save_file(sort_params, 1, self.imgs_to_process)
 
             self.logger.info(f"Image {self.img_path.name} done in {time.monotonic()-start_time:.2f} seconds.")
 
@@ -386,8 +371,10 @@ class PixelSort:
                 filename = output_path.stem            
 
         for option in self.options.__dict__.values():
+            if option.name == "amount" and self.get_out_ext() == ".gif":
+                option.show = True
             if option.show and option.value != option.default:
-                if option.isvariable and not (self.options.e.value == ".gif" or self.img_path.suffix == ".gif"):
+                if option.isvariable and not self.get_out_ext() == ".gif":
                     filename += f"_{option.short}_{getattr(sort_params, option.short)}"
                 elif option.val_type == bool:
                     filename += f"_{option.short}"
@@ -395,11 +382,15 @@ class PixelSort:
                     filename += f"_{option.short}_{option.value}"
 
         filename += f"_{i:04}" if i != None else ""
-        filename += self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
+        filename += self.get_out_ext()
 
         file_path = folder / filename
 
         return file_path
+
+    def get_out_ext(self):
+        """Get output image file extension."""
+        return self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
 
 if __name__ == "__main__":
     app = PixelSort()
