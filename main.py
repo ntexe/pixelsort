@@ -77,19 +77,34 @@ class PixelSort:
                     self.logger.info(f"Image {img_number}.{j}/{self.img_count} done in {time.monotonic()-start_time:.2f} seconds.")
 
             else: # image has several frames
-                for i in range(1, getattr(img, "n_frames", 1) + 1):
+                for i in range(1, img.n_frames+1):
                     img.seek(i-1)
                     self.logger.debug(f"Converting image {img_number}.{i} to RGB...")
                     self.img = img.convert("RGB")
+                    self.imgs_to_process.append(self.img.copy())
 
-                    self.logger.debug("Initializing SortingEngine object...")
-                    self.sorting_engine = SortingEngine(self.options)
+                self.logger.debug("Initializing SortingEngine object...")
+                self.sorting_engine = SortingEngine(self.options)
 
-                    for j in range(1, self.options.am.value+1):
-                        self.logger.info(f"Preparing image {img_number}.{i}.{j}/{img_number}...")
-                        start_time = time.monotonic()
-                        self.process_image(i, j)
-                        self.logger.info(f"Image {img_number}.{i}.{j}/{img_number} done in {time.monotonic()-start_time:.2f} seconds.")
+                sort_params = SortParams()
+
+                for i in range(1, img.n_frames+1):
+                    self.logger.info(f"Preparing image {img_number}.{i}/{img_number}...")
+                    start_time = time.monotonic()
+                    rimg, sort_params = self.process_image(i, self.imgs_to_process[i-1])
+
+                    self.imgs_to_process[i-1] = rimg.copy()
+
+                # save file
+                file_path = Path(self.generate_file_path(sort_params))
+                if not os.path.exists(file_path.parent):
+                    os.makedirs(file_path.parent)
+
+                self.logger.info(f"Saving to {file_path}...")
+                self.imgs_to_process[0].save(file_path, quality=95, save_all=True, append_images=self.imgs_to_process[1:], duration=100, loop=0)
+                self.logger.info("Saved.")
+
+                self.logger.info(f"Image {img_number}.{i}/{img_number} done in {time.monotonic()-start_time:.2f} seconds.")
 
     def setup_logging(self) -> None:
         """Setup logging."""
