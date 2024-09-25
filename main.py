@@ -62,31 +62,19 @@ class PixelSort:
                 imgc = img.convert("RGB")
                 self.imgs_to_process = []
 
-                for j in range(1, self.options.am.value+1):
-                    self.logger.info(f"Preparing image {img_number}.{j}/{self.img_count}...")
-                    rimg, sort_params = self.process_image(j, imgc)
+                for i in range(1, self.options.am.value+1):
+                    self.logger.info(f"Preparing image {img_number}.{i}/{self.img_count}...")
+                    rimg, sort_params = self.process_image(i, imgc)
 
                     # save file
                     if self.options.e.value == ".gif":
                         self.imgs_to_process.append(rimg.copy())
                     else: # save to multiple one frame files
-                        file_path = Path(self.generate_file_path(sort_params, j=j))
-                        if not os.path.exists(file_path.parent):
-                            os.makedirs(file_path.parent)
-
-                        self.logger.info(f"Saving to {file_path}...")
-                        rimg.save(file_path, quality=95)
-                        self.logger.info("Saved.")
+                        self.save_file(sort_params, i, [rimg])
 
                 # save file
                 if self.options.e.value == ".gif": # save to one animated file
-                    file_path = Path(self.generate_file_path(sort_params, i=1))
-                    if not os.path.exists(file_path.parent):
-                        os.makedirs(file_path.parent)
-
-                    self.logger.info(f"Saving to {file_path}...")
-                    self.imgs_to_process[0].save(file_path, quality=95, save_all=True, append_images=self.imgs_to_process[1:], loop=0)
-                    self.logger.info("Saved.")
+                    self.save_file(SortParams(), 1, self.imgs_to_process)
 
             else: # image has several frames
                 start_time = time.monotonic()
@@ -106,23 +94,11 @@ class PixelSort:
                     if self.options.e.value in (".gif", "same"):
                         self.imgs_to_process[i-1] = rimg.copy()
                     else: # save to multiple one frame files
-                        file_path = Path(self.generate_file_path(sort_params, i=i))
-                        if not os.path.exists(file_path.parent):
-                            os.makedirs(file_path.parent)
-
-                        self.logger.info(f"Saving to {file_path}...")
-                        rimg.save(file_path, quality=95)
-                        self.logger.info("Saved.")
+                        self.save_file(sort_params, i, [rimg])
 
                 # save file
                 if self.options.e.value in (".gif", "same"): # save to one animated file
-                    file_path = Path(self.generate_file_path(sort_params, i=1))
-                    if not os.path.exists(file_path.parent):
-                        os.makedirs(file_path.parent)
-
-                    self.logger.info(f"Saving to {file_path}...")
-                    self.imgs_to_process[0].save(file_path, quality=95, save_all=True, append_images=self.imgs_to_process[1:])
-                    self.logger.info("Saved.")
+                    self.save_file(SortParams(), 1, self.imgs_to_process)
 
             self.logger.info(f"Image {self.img_path.name} done in {time.monotonic()-start_time:.2f} seconds.")
 
@@ -356,7 +332,34 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_file_path(self, sort_params: SortParams, i: int=None, j: int=None):
+    def save_file(self, sort_params, i, imgs):
+        """
+        Save image (or images) to file.
+        If len(imgs) > 1, images will be saved to one gif file.
+        """
+        if len(imgs) == 1:
+            file_path = Path(self.generate_file_path(sort_params, i))
+            if not os.path.exists(file_path.parent):
+                os.makedirs(file_path.parent)
+
+            self.logger.info(f"Saving to {file_path}...")
+            imgs[0].save(file_path, quality=95)
+            self.logger.info("Saved.")
+
+        elif len(imgs) == 0:
+            self.logger.debug("Empty array passed to save_file function arguments.")
+            return
+
+        else: # save to gif file
+            file_path = Path(self.generate_file_path(sort_params, i))
+            if not os.path.exists(file_path.parent):
+                os.makedirs(file_path.parent)
+
+            self.logger.info(f"Saving to {file_path}...")
+            imgs[0].save(file_path, quality=95, save_all=True, append_images=imgs[1:], loop=0)
+            self.logger.info("Saved.")
+
+    def generate_file_path(self, sort_params: SortParams, i: int=None):
         """
         Generate and return file path for output image.
 
@@ -392,7 +395,6 @@ class PixelSort:
                     filename += f"_{option.short}_{option.value}"
 
         filename += f"_{i:04}" if i != None else ""
-        filename += f"_{j:04}" if j != None else ""
         filename += self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
 
         file_path = folder / filename
