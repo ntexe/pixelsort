@@ -35,7 +35,7 @@ HELP_SCALE = f"Rescale image before sorting. If width or height are non-zero thi
 HELP_WIDTH = f"Resize to width before sorting. Value should be greater than or equal to 0. If value is zero, width is calculated automatically. Default is {OPTION_DEFAULTS['width']}."
 HELP_HEIGHT = f"Resize to height before sorting. Value should be greater than or equal to 0. If value is zero, height is calculated automatically. Default is {OPTION_DEFAULTS['height']}."
 
-HELP_AMOUNT = f"Amount of images. Value should be a natural value. Default is {OPTION_DEFAULTS['amount']}."
+HELP_AMOUNT = f"Amount of images. Value should be a natural value. If input is animated this value will be ignored. Default is {OPTION_DEFAULTS['amount']}."
 
 HELP_SECOND_PASS = "Second pass flag."
 HELP_REVERSE = "Reverse sort flag."

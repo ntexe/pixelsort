@@ -17,14 +17,14 @@ from sorting import SortingEngine
 class PixelSort:
     """Pixelsort app class."""
     def __init__(self):
-        self.img = None
         self.logger = None
 
         self.options = gen_options()
 
         self.input_path = ""
         self.supported_exts = list(Image.registered_extensions().keys())
-        self.imgs_to_process = []
+        self.ifns_to_process = [] # image filenames to process
+        self.imgs_to_process = [] # image objects to process
 
     def main(self) -> None:
         """Do main work."""
@@ -36,34 +36,56 @@ class PixelSort:
         if self.input_path.is_dir():
             for filename in os.listdir(self.input_path):
                 if Path(filename).suffix in self.supported_exts:
-                    self.imgs_to_process.append(self.input_path / filename)
+                    self.ifns_to_process.append(self.input_path / filename)
 
         elif self.input_path.is_file():
-            self.imgs_to_process = [self.input_path]
+            self.ifns_to_process = [self.input_path]
 
         else:
             self.logger.critical(f"Input path is invalid, exiting...")
             exit(1)
 
-        self.img_count = len(self.imgs_to_process)
-        self.img_number = 0
+        self.img_count = len(self.ifns_to_process)
 
-        for self.img_number in range(1, self.img_count+1):
-            self.img_path = self.imgs_to_process[self.img_number-1]
-            self.logger.info(f"Opening image {self.img_number}/{self.img_count} {self.img_path.name}...")
+        self.logger.debug("Initializing SortingEngine object...")
+        self.sorting_engine = SortingEngine(self.options)
+
+        for img_number in range(1, self.img_count+1):
+            start_time = time.monotonic()
+
+            self.img_path = self.ifns_to_process[img_number-1]
+            self.logger.info(f"Opening image {img_number}/{self.img_count} {self.img_path.name}...")
             img = Image.open(self.img_path)
 
-            self.logger.debug("Converting image to RGB...")
-            self.img = img.convert("RGB")
+            self.imgs_to_process = []
 
-            self.logger.debug("Initializing SortingEngine object...")
-            self.sorting_engine = SortingEngine(self.options)
+            for i in range(1, getattr(img, "n_frames", 1)+1):
+                img.seek(i-1)
+                self.logger.debug(f"Converting image {img_number}.{i} to RGB...")
+                self.imgs_to_process.append(img.convert("RGB"))
 
-            for j in range(1, self.options.am.value+1):
-                self.logger.info(f"Preparing image {self.img_number}.{j}/{self.img_number}.{self.options.am.value}...")
-                start_time = time.monotonic()
-                self.process_image(j)
-                self.logger.info(f"Image {self.img_number}.{j}/{self.img_number}.{self.options.am.value} done in {time.monotonic()-start_time:.2f} seconds.")
+            sort_params = SortParams()
+            if getattr(img, "n_frames", 1) > 1: # set amount to n_frames, if n_frames > 1
+                self.options.am.value = img.n_frames
+
+            # duplicate references to the same object.
+            if len(self.imgs_to_process) < self.options.am.value:
+                self.imgs_to_process = [self.imgs_to_process[0] for i in range(self.options.am.value)]
+
+            for i in range(1, self.options.am.value+1):
+                self.logger.info(f"Preparing image {i}/{self.options.am.value}...")
+
+                rimg, sort_params = self.process_image(i, self.imgs_to_process[i-1])
+
+                if self.get_out_ext() == ".gif":
+                    self.imgs_to_process[i-1] = rimg.copy() # we will save it later
+                else:
+                    self.save_file(sort_params, i, [rimg])
+
+            if self.get_out_ext() == ".gif":
+                self.save_file(sort_params, 1, self.imgs_to_process)
+
+            self.logger.info(f"Image {self.img_path.name} done in {time.monotonic()-start_time:.2f} seconds.")
 
     def setup_logging(self) -> None:
         """Setup logging."""
@@ -203,12 +225,12 @@ class PixelSort:
 
         return (new_width, new_height)
 
-    def process_image(self, i: int) -> None:
+    def process_image(self, j: int, img: Image) -> tuple:
         """
         Process image.
 
-        :param i: Number of image
-        :type i: int
+        :param j: Number of image
+        :type j: int
         """
         sort_params = SortParams()
         sp_sort_params = SortParams()
@@ -217,7 +239,7 @@ class PixelSort:
 
         for option in self.options.__dict__.values():
             if option.isvariable:
-                setattr(sort_params, option.short, option.get_balance((i, self.options.am.value)))
+                setattr(sort_params, option.short, option.get_balance((j, self.options.am.value)))
                 # copy sort_params to sp_sort_params
                 setattr(sp_sort_params, option.short, getattr(sort_params, option.short))
                 # log parameters
@@ -226,10 +248,10 @@ class PixelSort:
         sp_sort_params.a = sort_params.a+sort_params.sa
 
         # resize
-        self.img_size = self.img.size
+        self.img_size = img.size
         new_dims = self.calc_dims(sort_params)
         self.logger.debug(f"Resizing image to {new_dims[0]}x{new_dims[1]}...")
-        rimg = self.img.resize(new_dims)
+        rimg = img.resize(new_dims)
         self.img_size = new_dims
 
         # rotate
@@ -274,18 +296,10 @@ class PixelSort:
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
         if self.options.pr.value:
-            self.logger.debug(f"Resizing image back to {self.img.size}")
-            rimg = rimg.resize(self.img.size)
+            self.logger.debug(f"Resizing image back to {img.size}")
+            rimg = rimg.resize(img.size)
 
-        file_path = Path(self.generate_file_path(sort_params, i))
-
-        self.logger.info(f"Saving to {file_path}...")
-
-        if not os.path.exists(file_path.parent):
-            os.makedirs(file_path.parent)
-
-        rimg.save(file_path, quality=95)
-        self.logger.info("Saved.")
+        return (rimg.copy(), sort_params)
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """
@@ -303,7 +317,34 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def generate_file_path(self, sort_params: SortParams, i: int):
+    def save_file(self, sort_params, i, imgs):
+        """
+        Save image (or images) to file.
+        If len(imgs) > 1, images will be saved to one gif file.
+        """
+        if len(imgs) == 1:
+            file_path = Path(self.generate_file_path(sort_params, i))
+            if not os.path.exists(file_path.parent):
+                os.makedirs(file_path.parent)
+
+            self.logger.info(f"Saving to {file_path}...")
+            imgs[0].save(file_path, quality=95)
+            self.logger.info("Saved.")
+
+        elif len(imgs) == 0:
+            self.logger.debug("Empty array passed to save_file function arguments.")
+            return
+
+        else: # save to gif file
+            file_path = Path(self.generate_file_path(sort_params, i))
+            if not os.path.exists(file_path.parent):
+                os.makedirs(file_path.parent)
+
+            self.logger.info(f"Saving to {file_path}...")
+            imgs[0].save(file_path, quality=95, save_all=True, append_images=imgs[1:], loop=0)
+            self.logger.info("Saved.")
+
+    def generate_file_path(self, sort_params: SortParams, i: int=None):
         """
         Generate and return file path for output image.
 
@@ -330,20 +371,26 @@ class PixelSort:
                 filename = output_path.stem            
 
         for option in self.options.__dict__.values():
+            if option.name == "amount" and self.get_out_ext() == ".gif":
+                option.show = True
             if option.show and option.value != option.default:
-                if option.isvariable:
+                if option.isvariable and not self.get_out_ext() == ".gif":
                     filename += f"_{option.short}_{getattr(sort_params, option.short)}"
                 elif option.val_type == bool:
                     filename += f"_{option.short}"
                 else:
                     filename += f"_{option.short}_{option.value}"
 
-        filename += f"_{self.img_number:04}_{i:04}"
-        filename += self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
+        filename += f"_{i:04}" if i != None else ""
+        filename += self.get_out_ext()
 
         file_path = folder / filename
 
         return file_path
+
+    def get_out_ext(self):
+        """Get output image file extension."""
+        return self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
 
 if __name__ == "__main__":
     app = PixelSort()
