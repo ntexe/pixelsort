@@ -1,9 +1,7 @@
-import argparse
+from argparse import ArgumentParser
 import logging
-import math
 import os
 import time
-import random
 from pathlib import Path
 
 from PIL import Image, ImageFilter
@@ -107,7 +105,7 @@ class PixelSort:
 
     def parse_args(self) -> None:
         """Parse command line arguments."""
-        arg_parser = argparse.ArgumentParser(description=HELP_DESCRIPTION)
+        arg_parser = ArgumentParser(description=HELP_DESCRIPTION)
 
         arg_parser.add_argument("input_path", help=HELP_INPUT_PATH)
 
@@ -322,27 +320,23 @@ class PixelSort:
         Save image (or images) to file.
         If len(imgs) > 1, images will be saved to one gif file.
         """
-        if len(imgs) == 1:
-            file_path = Path(self.generate_file_path(sort_params, i))
-            if not os.path.exists(file_path.parent):
-                os.makedirs(file_path.parent)
-
-            self.logger.info(f"Saving to {file_path}...")
-            imgs[0].save(file_path, quality=95)
-            self.logger.info("Saved.")
-
-        elif len(imgs) == 0:
+        if len(imgs) == 0:
             self.logger.debug("Empty array passed to save_file function arguments.")
             return
 
-        else: # save to gif file
-            file_path = Path(self.generate_file_path(sort_params, i))
-            if not os.path.exists(file_path.parent):
-                os.makedirs(file_path.parent)
+        file_path = Path(self.generate_file_path(sort_params, i))
+        if not os.path.exists(file_path.parent):
+            os.makedirs(file_path.parent)
 
-            self.logger.info(f"Saving to {file_path}...")
+        self.logger.info(f"Saving to {file_path}...")
+
+        if len(imgs) == 1: # save to single frame file
+            imgs[0].save(file_path, quality=95)
+
+        else: # save to multi frame file
             imgs[0].save(file_path, quality=95, save_all=True, append_images=imgs[1:], loop=0)
-            self.logger.info("Saved.")
+
+        self.logger.info("Saved.")
 
     def generate_file_path(self, sort_params: SortParams, i: int=None):
         """
