@@ -79,6 +79,23 @@ class SortingEngine:
 
     def none_sort(self) -> None:
         """Sort with none segmentation."""
+        to_sort = []
+        for y in range(self.image_size[1]):
+            rstart, rend, start, end = self.calc_bounds(y)
+
+            to_sort.extend(self.image_data[start:end])
+
+        to_sort.sort(key=self.skey, reverse=self.re)
+
+        index = 0
+        for y in range(self.image_size[1]):
+            rstart, rend, start, end = self.calc_bounds(y)
+
+            self.image_data[start:end] = to_sort[index:index+end-start]
+            index += end-start
+
+    def row_sort(self) -> None:
+        """Sort with row segmentation."""
         for y in range(self.image_size[1]):
             # rstart, rend - relative x
             # start, end - absolute x

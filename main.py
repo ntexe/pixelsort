@@ -369,7 +369,7 @@ class PixelSort:
                 option.show = True
             if option.show and option.value != option.default:
                 if option.isvariable and not self.get_out_ext() == ".gif":
-                    filename += f"_{option.short}_{getattr(sort_params, option.short)}"
+                    filename += f"_{option.short}{getattr(sort_params, option.short)}"
                 elif option.val_type == bool:
                     filename += f"_{option.short}"
                 else:

@@ -3,7 +3,7 @@ LOG_FORMAT = "{unix_timestamp}.log"
 
 LOGLEVEL_CHOICES = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 AUX_LL_CHOICES = list(map(str.lower, LOGLEVEL_CHOICES))
-SEGMENTATION_CHOICES = ["none", "edge", "melting", "chunky", "blocky"]
+SEGMENTATION_CHOICES = ["none", "row", "edge", "melting", "chunky", "blocky"]
 SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red", "green", "blue"]
 
 OPTION_DEFAULTS = {
