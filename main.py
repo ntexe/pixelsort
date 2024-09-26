@@ -16,34 +16,24 @@ class PixelSort:
     """Pixelsort app class."""
     def __init__(self):
         self.logger = None
-
+        self.stream_handler = None
+        self.file_handler = None
+        
         self.options = gen_options()
-
-        self.input_path = ""
         self.supported_exts = list(Image.registered_extensions().keys())
-        self.ifns_to_process = [] # image filenames to process
-        self.imgs_to_process = [] # image objects to process
+        self.img_count = 0
+        self.sorting_engine = None
+        self.img_path = ""
+        self.img_size = (0,0)
 
     def main(self) -> None:
         """Do main work."""
         self.setup_logging()
         self.parse_args()
 
-        self.input_path = Path(self.options.input_path.value)
+        img_filenames = self.get_image_filenames()
 
-        if self.input_path.is_dir():
-            for filename in os.listdir(self.input_path):
-                if Path(filename).suffix in self.supported_exts:
-                    self.ifns_to_process.append(self.input_path / filename)
-
-        elif self.input_path.is_file():
-            self.ifns_to_process = [self.input_path]
-
-        else:
-            self.logger.critical(f"Input path is invalid, exiting...")
-            exit(1)
-
-        self.img_count = len(self.ifns_to_process)
+        self.img_count = len(img_filenames)
 
         self.logger.debug("Initializing SortingEngine object...")
         self.sorting_engine = SortingEngine(self.options)
@@ -51,37 +41,39 @@ class PixelSort:
         for img_number in range(1, self.img_count+1):
             start_time = time.monotonic()
 
-            self.img_path = self.ifns_to_process[img_number-1]
+            self.img_path = img_filenames[img_number-1]
             self.logger.info(f"Opening image {img_number}/{self.img_count} {self.img_path.name}...")
             img = Image.open(self.img_path)
 
-            self.imgs_to_process = []
+            images = []
 
+            # append every frame to images list
             for i in range(1, getattr(img, "n_frames", 1)+1):
                 img.seek(i-1)
-                self.logger.debug(f"Converting image {img_number}.{i} to RGB...")
-                self.imgs_to_process.append(img.convert("RGB"))
+                self.logger.debug(f"Converting frame {i} to RGB...")
+                images.append(img.convert("RGB"))
 
             sort_params = SortParams()
             if getattr(img, "n_frames", 1) > 1: # set amount to n_frames, if n_frames > 1
                 self.options.am.value = img.n_frames
 
             # duplicate references to the same object.
-            if len(self.imgs_to_process) < self.options.am.value:
-                self.imgs_to_process = [self.imgs_to_process[0] for i in range(self.options.am.value)]
+            if len(images) < self.options.am.value:
+                images = [images[0] for i in range(self.options.am.value)]
 
+            # sort every frame
             for i in range(1, self.options.am.value+1):
-                self.logger.info(f"Preparing image {i}/{self.options.am.value}...")
+                self.logger.info(f"Preparing frame {i}/{self.options.am.value}...")
 
-                rimg, sort_params = self.process_image(i, self.imgs_to_process[i-1])
+                rimg, sort_params = self.process_image(images[i-1], i)
 
                 if self.get_out_ext() == ".gif":
-                    self.imgs_to_process[i-1] = rimg.copy() # we will save it later
+                    images[i-1] = rimg.copy() # we will save it later
                 else:
                     self.save_file(sort_params, i, [rimg])
 
             if self.get_out_ext() == ".gif":
-                self.save_file(sort_params, 1, self.imgs_to_process)
+                self.save_file(sort_params, 1, images)
 
             self.logger.info(f"Image {self.img_path.name} done in {time.monotonic()-start_time:.2f} seconds.")
 
@@ -223,12 +215,17 @@ class PixelSort:
 
         return (new_width, new_height)
 
-    def process_image(self, j: int, img: Image) -> tuple:
+    def process_image(self, img: Image, i: int) -> tuple:
         """
         Process image.
 
-        :param j: Number of image
-        :type j: int
+        :param img: Image object.
+        :type img: Image
+        :param i: Number of image.
+        :type i: int
+
+        :returns: Tuple of output image and SortParams object.
+        :rtype: tuple
         """
         sort_params = SortParams()
         sp_sort_params = SortParams()
@@ -237,7 +234,7 @@ class PixelSort:
 
         for option in self.options.__dict__.values():
             if option.isvariable:
-                setattr(sort_params, option.short, option.get_balance((j, self.options.am.value)))
+                setattr(sort_params, option.short, option.get_balance((i, self.options.am.value)))
                 # copy sort_params to sp_sort_params
                 setattr(sp_sort_params, option.short, getattr(sort_params, option.short))
                 # log parameters
@@ -258,12 +255,10 @@ class PixelSort:
 
         # first pass sorting
         self.logger.info("Sorting image...")
-
         self.sorting_engine.set_sort_params(sort_params)
         self.sorting_engine.set_image(rimg)
         self.sorting_engine.set_og_image_size(self.img_size)
         self.sorting_engine.sort_image()
-
         self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
         # rotate back
@@ -280,12 +275,10 @@ class PixelSort:
             
             # second pass sorting
             self.logger.info("Second pass sorting...")
-
             self.sorting_engine.set_sort_params(sp_sort_params)
             self.sorting_engine.set_image(rimg)
             self.sorting_engine.set_og_image_size(self.img_size)
             self.sorting_engine.sort_image()
-
             self.logger.debug("Second pass sorting done.")
 
             # rotate back
@@ -297,7 +290,7 @@ class PixelSort:
             self.logger.debug(f"Resizing image back to {img.size}")
             rimg = rimg.resize(img.size)
 
-        return (rimg.copy(), sort_params)
+        return (rimg, sort_params)
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
         """
@@ -315,10 +308,17 @@ class PixelSort:
                 (rimg_size[0]/2)+(self.img_size[0]/2),
                 (rimg_size[1]/2)+(self.img_size[1]/2))
 
-    def save_file(self, sort_params, i, imgs):
+    def save_file(self, sort_params: SortParams, i: int, imgs: list) -> None:
         """
         Save image (or images) to file.
-        If len(imgs) > 1, images will be saved to one gif file.
+        If len(imgs) > 1, images will be saved to one multi frame file.
+
+        :param sort_params: SortParams object.
+        :type sort_params: SortParams
+        :param i: Image number.
+        :type i: int
+        :param imgs: list with Image objects to save.
+        :type imgs: list
         """
         if len(imgs) == 0:
             self.logger.debug("Empty array passed to save_file function arguments.")
@@ -385,6 +385,27 @@ class PixelSort:
     def get_out_ext(self):
         """Get output image file extension."""
         return self.img_path.suffix if self.options.e.value == 'same' else self.options.e.value
+
+    def get_image_filenames(self) -> list:
+        """
+        Return list of image filenames.
+
+        :returns: List of image filenames.
+        :rtype: list
+        """
+        input_path = Path(self.options.input_path.value)
+
+        if input_path.is_dir():
+            # return all images with supported extension in dir
+            return list([input_path / filename for filename in os.listdir(input_path) if Path(filename).suffix in self.supported_exts])
+
+        if input_path.is_file():
+            # return input path
+            return [input_path]
+
+        # path does not exist
+        self.logger.critical(f"Input path is invalid, exiting...")
+        exit(1)
 
 if __name__ == "__main__":
     app = PixelSort()
