@@ -97,7 +97,9 @@ You can set the "--sp" flag to "second pass" the image. After the first pass ima
 ### Animation
 This tool has GIF support, so you can pass .gif file to command line arguments and the tool will sort every frame of input image and save output to animated .gif file. Note that amount is ignored, if input file has multiple frames.
 You can pass two comma-separated values to threshold, angle, second pass angle, size, randomness, length, scale, width and height. If amount is greater than 1, value of parameters will range from first to second value.
+
 Example: `python main.py img.jpg -a 0,45 -am 3` will generate three images with angle parameter 0, 22 and 45.
+
 Example: `python main.py gif.gif -a 0,360` will generate one gif file with variable angle.
 
 ### Preserve resolution
