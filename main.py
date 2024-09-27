@@ -286,7 +286,7 @@ class PixelSort:
             rimg = rimg.rotate(-sp_sort_params.a, expand=True)
             rimg = rimg.crop(self.get_crop_rectangle(rimg.size))
 
-        if self.options.pr.value:
+        if self.options.pr.value: # preserve resolution
             self.logger.debug(f"Resizing image back to {img.size}")
             rimg = rimg.resize(img.size)
 
