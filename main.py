@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageOps
 
 from constants import *
 import pixel_utils
@@ -26,6 +26,8 @@ class PixelSort:
         self.img_path = ""
         self.img_size = (0,0)
 
+        self.mask_image = None
+
     def main(self) -> None:
         """Do main work."""
         self.setup_logging()
@@ -37,6 +39,11 @@ class PixelSort:
 
         self.logger.debug("Initializing SortingEngine object...")
         self.sorting_engine = SortingEngine(self.options)
+
+        if self.options.m.value != "":
+            self.logger.info(f"Opening mask image...")
+            self.mask_image = Image.open(self.options.m.value)
+            self.mask_image = ImageOps.invert(self.mask_image.convert("L"))
 
         for img_number in range(1, self.img_count+1):
             start_time = time.monotonic()
@@ -290,6 +297,9 @@ class PixelSort:
             self.logger.debug(f"Resizing image back to {img.size}")
             rimg = rimg.resize(img.size)
 
+        if self.options.m.value != "":
+            rimg.paste(img.resize(rimg.size), None, self.mask_image.resize(rimg.size))
+
         return (rimg, sort_params)
 
     def get_crop_rectangle(self, rimg_size: tuple) -> tuple:
@@ -368,9 +378,9 @@ class PixelSort:
             if option.name == "amount" and self.get_out_ext() == ".gif":
                 option.show = True
             if option.show and option.value != option.default:
-                if option.isvariable and not self.get_out_ext() == ".gif":
+                if option.isvariable and not self.get_out_ext() == ".gif" and option.name != "mask":
                     filename += f"_{option.short}{getattr(sort_params, option.short)}"
-                elif option.val_type == bool:
+                elif option.val_type == bool or option.name == "mask":
                     filename += f"_{option.short}"
                 else:
                     filename += f"_{option.short}_{option.value}"

@@ -7,7 +7,7 @@ SEGMENTATION_CHOICES = ["none", "row", "edge", "melting", "chunky", "blocky"]
 SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red", "green", "blue"]
 
 OPTION_DEFAULTS = {
-    "output": "pixelsorted", "loglevel": "INFO", "segmentation": "edge",
+    "output": "pixelsorted", "mask": "", "loglevel": "INFO", "segmentation": "edge",
     "skey_choice": "lightness", "ext": "same", "threshold": 0.1, "angle": 0,
     "sangle": 90, "size": 0.05, "randomness": 0, "length": 10, "scale": 1,
     "width": 0, "height": 0, "amount": 1
@@ -18,6 +18,7 @@ HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
 HELP_INPUT_PATH = "Input file path or folder."
 HELP_OUTPUT = f"Output file path or folder. Default is {OPTION_DEFAULTS['output']}."
 HELP_EXT = f"Output image extension. If output path specified this value will be ignored. Default is {OPTION_DEFAULTS['ext']}."
+HELP_MASK = f"Mask file path."
 
 HELP_LOGLEVEL = f"Log level for command line. Available choices: {', '.join(LOGLEVEL_CHOICES)} (lowercase is also accepted). Default is {OPTION_DEFAULTS['loglevel']}"
 

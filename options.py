@@ -17,6 +17,9 @@ def gen_options():
     options.e =  Option(name="ext", short="e", option_type=1,
                         default=OPTION_DEFAULTS["ext"],
                         help_string=HELP_EXT, val_type=str)
+    options.m =  Option(name="mask", short="m", option_type=1,
+                        default=OPTION_DEFAULTS["mask"], 
+                        help_string=HELP_MASK, val_type=str, show=True)
 
     options.ll = Option(name="loglevel", short="ll", option_type=1,
                         default=OPTION_DEFAULTS["loglevel"],
