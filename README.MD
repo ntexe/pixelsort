@@ -11,8 +11,8 @@ pip install Pillow
 
 ## Usage
 ```
-usage: main.py [-h] [-o] [-e] [-m] [-ll] [-sg] [-sk] [-t] [-a] [-sa] [-sz] [-r] [-l] [-sc] [-w]
-               [-hg] [-am] [--sp] [--re] [--pr] [--sl] [--nl]
+usage: main.py [-h] [-o] [-e] [-m] [-ll] [-sg] [-sk] [-t] [-a] [-sa] [-sz] [-r] [-l] [-sc] [-w] [-hg]
+               [-am] [--sp] [--re] [--pr] [--sl] [--nl]
                input_path
 
 PixelSort is a python tool for sorting pixels in images.
@@ -33,23 +33,22 @@ options:
                         Default is edge.
   -sk , --skey-choice   Sorting key. Available choices: hue, lightness, saturation, min_value,
                         max_value, red, green, blue. Default is lightness.
-  -t , --threshold      Threshold for edge detection. Value should be between 0 and 1. Default is
-                        0.1.
-  -a , --angle          Angle to rotate the image before sorting in degrees. Value should be between
-                        0 and 360. Default is 0.
+  -t , --threshold      Threshold for edge detection. Value should be between 0 and 1. Default is 0.1.
+  -a , --angle          Angle to rotate the image before sorting in degrees. Value should be between 0
+                        and 360. Default is 0.
   -sa , --sangle        Angle for second pass. Value should be between 0 and 360. Default is 90.
-  -sz , --size          Size of "melting" or "blocky" segmentation. Value should be between 0.001
-                        and 1. Default is 0.05.
-  -r , --randomness     Randomness of "blocky" or "chunky" segmentation. Value should be between 0
-                        and 0.5. Default is 0.
+  -sz , --size          Size of "melting" or "blocky" segmentation. Value should be between 0.001 and 1.
+                        Default is 0.05.
+  -r , --randomness     Randomness of "blocky" or "chunky" segmentation. Value should be between 0 and
+                        0.5. Default is 0.
   -l , --length         Length of "chunky" segmentation. Value should be greater than or equal to 1.
                         Default is 10.
-  -sc , --scale         Rescale image before sorting. If width or height are non-zero this value
-                        will be ignored. Value should be between 0.01 and 10. Default is 1.
-  -w , --width          Resize to width before sorting. Value should be greater than or equal to 0.
-                        If value is zero, width is calculated automatically. Default is 0.
-  -hg , --height        Resize to height before sorting. Value should be greater than or equal to 0.
-                        If value is zero, height is calculated automatically. Default is 0.
+  -sc , --scale         Rescale image before sorting. If width or height are non-zero this value will be
+                        ignored. Value should be between 0.01 and 10. Default is 1.
+  -w , --width          Resize to width before sorting. Value should be greater than or equal to 0. If
+                        value is zero, width is calculated automatically. Default is 0.
+  -hg , --height        Resize to height before sorting. Value should be greater than or equal to 0. If
+                        value is zero, height is calculated automatically. Default is 0.
   -am , --amount        Amount of images. Value should be a natural value. If input is animated this
                         value will be ignored. Default is 1.
   --sp, --second-pass   Second pass flag.
