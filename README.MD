@@ -60,6 +60,7 @@ options:
   --sp, --second-pass   Second pass flag.
   --re, --reverse       Reverse sort flag.
   --pr, --preserve-res  Preserve resolution.
+  --sm, --symmetry      Make row sort symmetrical.
   --sl, --silent        Make app silent in command line.
   --nl, --nolog         Disable logging.
 ```

@@ -68,6 +68,7 @@ class SortingEngine:
 
         self.skey = getattr(pixel_utils, self.options.sk.value)
         self.re = self.options.re.value
+        self.sm = self.options.sm.value
 
         # execute sort method
         getattr(self, self.options.sg.value+"_sort")()
@@ -103,6 +104,10 @@ class SortingEngine:
 
             row = self.image_data[start:end]
             row.sort(key=self.skey, reverse=self.re)
+
+            if self.sm:
+                row = [row[i*2 if i<len(row)//2 else -(i-(len(row)//2))*2-1] for i in range(len(row))]
+
             self.image_data[start:end] = row
             # it works faster than accessing self.image_data directly
 

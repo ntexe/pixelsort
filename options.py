@@ -70,6 +70,8 @@ class Options(object):
                          help_string=HELP_REVERSE, val_type=bool, show=True)
         self.pr = Option(name="preserve_res", short="pr", option_type=0, default=False,
                          help_string=HELP_PRESERVE_RES, val_type=bool, show=True)
+        self.sm = Option(name="symmetry", short="sm", option_type=0, default=False,
+                         help_string=HELP_SYMMETRY, val_type=bool, show=True)
 
         self.sl = Option(name="silent", short="sl", option_type=0, default=False,
                          help_string=HELP_SILENT, val_type=bool)
