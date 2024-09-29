@@ -9,7 +9,7 @@ from PIL import Image, ImageFilter, ImageOps
 from constants import *
 import pixel_utils
 from utils import Option, SortParams
-from options import Options, gen_options
+from options import Options
 from sorting import SortingEngine
 
 class PixelSort:
@@ -19,7 +19,7 @@ class PixelSort:
         self.stream_handler = None
         self.file_handler = None
         
-        self.options = gen_options()
+        self.options = Options()
         self.supported_exts = list(Image.registered_extensions().keys())
         self.img_count = 0
         self.sorting_engine = None
@@ -378,7 +378,7 @@ class PixelSort:
             if option.name == "amount" and self.get_out_ext() == ".gif":
                 option.show = True
             if option.show and option.value != option.default:
-                if option.isvariable and not self.get_out_ext() == ".gif" and option.name != "mask":
+                if option.isvariable and self.get_out_ext() != ".gif" and option.name != "mask":
                     filename += f"_{option.short}{getattr(sort_params, option.short)}"
                 elif option.val_type == bool or option.name == "mask":
                     filename += f"_{option.short}"
