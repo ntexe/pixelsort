@@ -6,7 +6,6 @@ def hue(pixel):
     """Return pixel hue."""
     return int(colorsys.rgb_to_hls(*[i/255 for i in pixel])[0]*255)
 
-@cache
 def lightness(pixel):
     """Return pixel lightness."""
     return int(colorsys.rgb_to_hls(*[i/255 for i in pixel])[1]*255)

@@ -2,6 +2,7 @@ import math
 import random
 
 from PIL import Image, ImageFilter
+import numpy as np
 
 import pixel_utils
 from options import Options
@@ -44,16 +45,14 @@ class SortingEngine:
         start = 0
         end = self.image_size[0]
 
-        yoffset = y * self.image_size[0]
-
         if self.sort_params.a % 90 != 0:
             start = round(max(self.x1-(y/self.sin_alpha)*self.sin_beta, self.x2-((self.image_size[1]-y)/self.sin_beta)*self.sin_alpha))
             end =   round(min(self.x1+(y/self.sin_beta)*self.sin_alpha, self.x2+((self.image_size[1]-y)/self.sin_alpha)*self.sin_beta))
 
-        return (start, end, yoffset+start, yoffset+end)
+        return (start, end)
 
     def sort_image(self) -> None:
-        self.image_data = list(self.image.getdata())
+        self.image_data = np.uint8(np.array(self.image))
         self.image_size = self.image.size
 
         self.sin_alpha = math.sin(math.radians(self.sort_params.a%90))
@@ -72,7 +71,7 @@ class SortingEngine:
         # execute sort method
         getattr(self, self.options.sg.value+"_sort")()
 
-        self.image.putdata(self.image_data)
+        self.image.paste(Image.fromarray(self.image_data))
 
         self.image_data = None
         self.edge_image_data = None
@@ -99,12 +98,11 @@ class SortingEngine:
         for y in range(self.image_size[1]):
             # rstart, rend - relative x
             # start, end - absolute x
-            rstart, rend, start, end = self.calc_bounds(y)
+            start, end = self.calc_bounds(y)
 
-            row = self.image_data[start:end]
-            row.sort(key=self.skey, reverse=self.re)
-            self.image_data[start:end] = row
-            # it works faster than accessing self.image_data directly
+            row = self.image_data[y, start:end]
+            row = row[np.argsort(np.apply_along_axis(self.skey, -1, row))]
+            self.image_data[y, start:end] = row
 
     def edge_sort(self) -> None:
         """Sort with edge segmentation."""
