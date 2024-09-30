@@ -173,7 +173,7 @@ class PixelSort:
             if option.isvariable and not option.parse_keyframes():
                 self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
 
-            elif not option.check_value(option.value):
+            elif not option.isvariable and not option.check_value(option.value):
                 option.set_to_default()
                 self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
 
