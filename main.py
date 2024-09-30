@@ -25,7 +25,7 @@ class PixelSort:
         self.img_count = 0
         self.sorting_engine = None
         self.img_path = ""
-        self.img_size = (0,0)
+        self.img_size = (0, 0)
 
         self.mask_image = None
 
@@ -169,22 +169,13 @@ class PixelSort:
             self.options.sc.set_to_default()
 
         for option in self.options.__dict__.values():
-            # parse keyframes
-            if option.isvariable:
-                if option.parse_keyframes() == 1:
-                    self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
+            # parse keyframes or validate
+            if option.isvariable and not option.parse_keyframes():
+                self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
 
-            # validate
-            if option.bounds != None and not option.isvariable:
-                if option.bounds[0] != None:
-                    if option.value < option.bounds[0]:
-                        self.logger.warning(f"{option.name.capitalize()} value is too small, will use default.")
-                        option.set_to_default()
-
-                if option.bounds[1] != None:
-                    if option.value > option.bounds[1]:
-                        self.logger.warning(f"{option.name.capitalize()} value is too big, will use default.")
-                        option.set_to_default()
+            elif not option.check_value(option.value):
+                option.set_to_default()
+                self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
 
         self.logger.debug("Arg parsing done.")
 

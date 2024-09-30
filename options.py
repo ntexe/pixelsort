@@ -23,50 +23,53 @@ class Option(object):
         self.isvariable = isvariable # is value variable or constant?
         self.show = show # include this option to filename?
 
-    def set_to_default(self):
+    def set_to_default(self) -> None:
         """Set value to default."""
         self.value = self.default
 
-    def parse_keyframes(self) -> int:
+    def check_value(self, value) -> bool:
+        """Check if value is in bounds."""
+        if self.bounds == None:
+            return True
+
+        if self.bounds[0] != None:
+            if value < self.bounds[0]:
+                return False
+
+        if self.bounds[1] != None:
+            if value > self.bounds[1]:
+                return False
+
+        return True
+
+    def parse_keyframes(self) -> bool:
         """
         Parse keyframes from value of Option object.
-        If value is invalid, use default and return 1.
+        Return False if value is invalid and use default if needed.
         """
 
-        res = 0
+        res = True
 
         if not self.isvariable:
-            return 1
+            return True  # because we do not need to parse keyframes
 
         splitted = str(self.value).split(",")
 
         if len(splitted) > 2:
             self.set_to_default()
             splitted = str(self.value).split(",")
-            res = 1
+            res = False
 
         start = self.val_type(splitted[0])
         end = self.val_type(splitted[-1])
 
-        # we need cleanup here
+        if not self.check_value(start):
+            start = self.default
+            res = False
 
-        if self.bounds[0] != None:
-            if start < self.bounds[0]:
-                start = self.default
-                res = 1
-
-            if end < self.bounds[0]:
-                end = self.default
-                res = 1
-
-        if self.bounds[1] != None:
-            if start > self.bounds[1]:
-                start = self.default
-                res = 1
-
-            if end > self.bounds[1]:
-                end = self.default
-                res = 1
+        if not self.check_value(end):
+            end = self.default
+            res = False
 
         self.keyframes = (start, end)
         return res
