@@ -8,8 +8,8 @@ from PIL import Image, ImageFilter, ImageOps
 
 from constants import *
 import pixel_utils
-from utils import Option, SortParams
-from options import Options
+from utils import SortParams
+from options import Option, Options
 from sorting import SortingEngine
 
 class PixelSort:

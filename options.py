@@ -1,8 +1,92 @@
 from constants import *
-from utils import Option
+
+# option_type can be 0, 1 or 2.
+# 0 - argument is a flag (bool value)
+# 1 - argument can contain only one value
+# 2 - argument can contain multiple values (list)
+
+class Option(object):
+    """Option object. Not to be confused with Options class."""
+    def __init__(self, *, name=None, short=None, option_type=None, default=None,
+                 choices=None, help_string=None, val_type=None,
+                 keyframes=None, bounds=None, isvariable=False, show=False):
+        self.name = name
+        self.short = short
+        self.option_type = option_type
+        self.default = default if option_type != 0 else False
+        self.choices = choices
+        self.help_string = help_string
+        self.value = None
+        self.val_type = val_type if option_type != 0 else bool
+        self.keyframes = keyframes
+        self.bounds = bounds
+        self.isvariable = isvariable # is value variable or constant?
+        self.show = show # include this option to filename?
+
+    def set_to_default(self):
+        """Set value to default."""
+        self.value = self.default
+
+    def parse_keyframes(self) -> int:
+        """
+        Parse keyframes from value of Option object.
+        If value is invalid, use default and return 1.
+        """
+
+        res = 0
+
+        if not self.isvariable:
+            return 1
+
+        splitted = str(self.value).split(",")
+
+        if len(splitted) > 2:
+            self.set_to_default()
+            splitted = str(self.value).split(",")
+            res = 1
+
+        start = self.val_type(splitted[0])
+        end = self.val_type(splitted[-1])
+
+        # we need cleanup here
+
+        if self.bounds[0] != None:
+            if start < self.bounds[0]:
+                start = self.default
+                res = 1
+
+            if end < self.bounds[0]:
+                end = self.default
+                res = 1
+
+        if self.bounds[1] != None:
+            if start > self.bounds[1]:
+                start = self.default
+                res = 1
+
+            if end > self.bounds[1]:
+                end = self.default
+                res = 1
+
+        self.keyframes = (start, end)
+        return res
+
+    def get_balance(self, vals: tuple):
+        """
+        Get keyframes from Option object and return calculated value.
+
+        :param vals: Values for ratio
+        :type vals: tuple
+
+        :returns: Calculated value
+        """
+
+        ratio = (vals[0]-1)/max(1, vals[1]-1)
+
+        return round(self.keyframes[0]*(1-ratio) + self.keyframes[1]*ratio, 3 if self.val_type == float else None)
 
 class Options(object):
-    """Options object. Not to be confused with Option object."""
+    """Options object. Not to be confused with Option class."""
     def __init__(self):
         """Generate options."""
         self.input_path = Option(name="input_path", short="input_path",
@@ -64,16 +148,16 @@ class Options(object):
                          default=OPTION_DEFAULTS["amount"], help_string=HELP_AMOUNT,
                          bounds=(1,None), val_type=int)
 
-        self.sp = Option(name="second_pass", short="sp", option_type=0, default=False,
-                         help_string=HELP_SECOND_PASS, val_type=bool, show=True)
-        self.re = Option(name="reverse", short="re", option_type=0, default=False,
-                         help_string=HELP_REVERSE, val_type=bool, show=True)
-        self.pr = Option(name="preserve_res", short="pr", option_type=0, default=False,
-                         help_string=HELP_PRESERVE_RES, val_type=bool, show=True)
-        self.sm = Option(name="symmetry", short="sm", option_type=0, default=False,
-                         help_string=HELP_SYMMETRY, val_type=bool, show=True)
+        self.sp = Option(name="second_pass", short="sp", option_type=0,
+                         help_string=HELP_SECOND_PASS, show=True)
+        self.re = Option(name="reverse", short="re", option_type=0,
+                         help_string=HELP_REVERSE, show=True)
+        self.pr = Option(name="preserve_res", short="pr", option_type=0,
+                         help_string=HELP_PRESERVE_RES, show=True)
+        self.sm = Option(name="symmetry", short="sm", option_type=0,
+                         help_string=HELP_SYMMETRY, show=True)
 
-        self.sl = Option(name="silent", short="sl", option_type=0, default=False,
-                         help_string=HELP_SILENT, val_type=bool)
-        self.nl = Option(name="nolog", short="nl", option_type=0, default=False,
-                         help_string=HELP_NOLOG, val_type=bool)
+        self.sl = Option(name="silent", short="sl", option_type=0,
+                         help_string=HELP_SILENT)
+        self.nl = Option(name="nolog", short="nl", option_type=0,
+                         help_string=HELP_NOLOG)
