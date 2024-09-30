@@ -1,5 +1,5 @@
 LOG_FOLDER = "logs"
-LOG_FORMAT = "{unix_timestamp}.log"
+LOG_FORMAT = "pixelsort.log"
 
 LOGLEVEL_CHOICES = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 AUX_LL_CHOICES = list(map(str.lower, LOGLEVEL_CHOICES))

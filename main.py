@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import logging
+import logging.handlers
 import os
 import time
 from pathlib import Path
@@ -89,10 +90,9 @@ class PixelSort:
         self.logger = logging.getLogger("pixelsort")
         self.logger.setLevel("DEBUG")
 
-        if not os.path.exists(LOG_FOLDER):
-            os.makedirs(LOG_FOLDER)
+        os.makedirs(LOG_FOLDER, exist_ok=True)
 
-        self.file_handler = logging.FileHandler(f"{LOG_FOLDER}/{LOG_FORMAT.format(unix_timestamp=int(time.time()))}", delay=True)
+        self.file_handler = logging.handlers.RotatingFileHandler(f"{LOG_FOLDER}/{LOG_FORMAT}", maxBytes=100000, backupCount=3, delay=True)
         self.stream_handler = logging.StreamHandler()
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -335,8 +335,7 @@ class PixelSort:
             return
 
         file_path = Path(self.generate_file_path(sort_params, i))
-        if not os.path.exists(file_path.parent):
-            os.makedirs(file_path.parent)
+        os.makedirs(file_path.parent, exist_ok=True)
 
         self.logger.info(f"Saving to {file_path}...")
 
