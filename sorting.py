@@ -33,7 +33,10 @@ class SortingEngine:
         self.og_image_size = og_image_size
 
     def make_symmetrical(self, array):
-        return [array[i*2 if i<len(array)//2 else -(i-(len(array)//2))*2-1] for i in range(len(array))]
+        """Make symmetrical if self.sm==True"""
+        if self.sm:
+            return [array[i*2 if i<len(array)//2 else -(i-(len(array)//2))*2-1] for i in range(len(array))]
+        return array
 
     def calc_bounds(self, y: int) -> tuple:
         """
@@ -95,10 +98,7 @@ class SortingEngine:
         for y in range(self.image_size[1]):
             rstart, rend, start, end = self.calc_bounds(y)
 
-            if self.sm:
-                self.image_data[start:end] = self.make_symmetrical(to_sort[index:index+end-start])
-            else:
-                self.image_data[start:end] = to_sort[index:index+end-start]
+            self.image_data[start:end] = self.make_symmetrical(to_sort[index:index+end-start])
             index += end-start
 
     def row_sort(self) -> None:
@@ -133,10 +133,7 @@ class SortingEngine:
             for x in range(len(row)):
                 if pixel_utils.lightness(edge_row[x]) > t*255:
                     if x - segment_begin > 1:
-                        if self.sm:
-                            row[segment_begin:x] = self.make_symmetrical(sorted(row[segment_begin:x], key=self.skey, reverse=self.re))
-                        else:
-                            row[segment_begin:x] = sorted(row[segment_begin:x], key=self.skey, reverse=self.re)
+                        row[segment_begin:x] = self.make_symmetrical(sorted(row[segment_begin:x], key=self.skey, reverse=self.re))
 
                     if x != 0:
                         segment_begin = x+1
@@ -158,10 +155,7 @@ class SortingEngine:
                 last_x = round(x)
                 x += width*random.random() if x == 0 else width
 
-                if self.sm:
-                    row[last_x:round(x)] = self.make_symmetrical(sorted(row[last_x:round(x)], key=self.skey, reverse=self.re))
-                else:
-                    row[last_x:round(x)] = sorted(row[last_x:round(x)], key=self.skey, reverse=self.re)
+                row[last_x:round(x)] = self.make_symmetrical(sorted(row[last_x:round(x)], key=self.skey, reverse=self.re))
 
             self.image_data[start:end] = row
 
@@ -190,12 +184,8 @@ class SortingEngine:
                 if max(0, rend-x) <= -offset+1:
                     x -= offset
 
-                if self.sm:
-                    row[last_x:round(x)-rstart] = self.make_symmetrical(sorted(row[last_x:round(x)-rstart], key=self.skey,
-                        reverse=(y//block_size)%2 != self.re))
-                else:
-                    row[last_x:round(x)-rstart] = sorted(row[last_x:round(x)-rstart], key=self.skey,
-                        reverse=(y//block_size)%2 != self.re)
+                row[last_x:round(x)-rstart] = self.make_symmetrical(sorted(row[last_x:round(x)-rstart], key=self.skey,
+                    reverse=(y//block_size)%2 != self.re))
 
 
                 first_iter = False
@@ -227,12 +217,8 @@ class SortingEngine:
                 last_x = round(max(x, 0))
                 x += l
 
-                if self.sm:
-                    row[last_x+last_offset:round(x+offset)] = self.make_symmetrical(sorted(row[last_x+last_offset:round(x+offset)], key=self.skey,
-                        reverse=self.re))
-                else:
-                    row[last_x+last_offset:round(x+offset)] = sorted(row[last_x+last_offset:round(x+offset)], key=self.skey,
-                        reverse=self.re)
+                row[last_x+last_offset:round(x+offset)] = self.make_symmetrical(sorted(row[last_x+last_offset:round(x+offset)], key=self.skey,
+                    reverse=self.re))
 
             chunky_offset = (((((len(row) - chunky_offset) // l)+1) * l) + chunky_offset) % len(row)
 
