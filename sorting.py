@@ -20,18 +20,6 @@ class SortingEngine:
 
         self.skey = None
 
-    def set_sort_params(self, sort_params: SortParams):
-        """Set sort parameters."""
-        self.sort_params = sort_params
-
-    def set_image(self, image: Image) -> None:
-        """Set image."""
-        self.image = image
-
-    def set_og_image_size(self, og_image_size: tuple) -> None:
-        """Set original image size."""
-        self.og_image_size = og_image_size
-
     def make_symmetrical(self, array):
         """Make symmetrical if self.sm==True"""
         if self.sm:
@@ -58,7 +46,22 @@ class SortingEngine:
 
         return (start, end, yoffset+start, yoffset+end)
 
-    def sort_image(self) -> None:
+    def sort_image(self, *, sort_params: SortParams, image: Image, og_image_size: tuple) -> None:
+        """
+        Sort image.
+
+        :param sort_params: SortParams object
+        :type sort_params: SortParams
+        :param image: Image object
+        :type image: Image
+        :param og_image_size: Original image size
+        :type og_image_size: tuple
+        """
+
+        self.sort_params = sort_params
+        self.image = image
+        self.og_image_size = og_image_size
+
         self.image_data = list(self.image.getdata())
         self.image_size = self.image.size
 

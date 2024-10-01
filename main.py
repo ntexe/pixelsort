@@ -253,10 +253,9 @@ class PixelSort:
 
         # first pass sorting
         self.logger.info("Sorting image...")
-        self.sorting_engine.set_sort_params(sort_params)
-        self.sorting_engine.set_image(rimg)
-        self.sorting_engine.set_og_image_size(self.img_size)
-        self.sorting_engine.sort_image()
+        self.sorting_engine.sort_image(sort_params=sort_params,
+                                       image=rimg,
+                                       og_image_size=self.img_size)
         self.logger.debug("First pass sorting done." if self.options.sp.value else "Sorting done.")
 
         # rotate back
@@ -273,10 +272,9 @@ class PixelSort:
             
             # second pass sorting
             self.logger.info("Second pass sorting...")
-            self.sorting_engine.set_sort_params(sp_sort_params)
-            self.sorting_engine.set_image(rimg)
-            self.sorting_engine.set_og_image_size(self.img_size)
-            self.sorting_engine.sort_image()
+            self.sorting_engine.sort_image(sort_params=sp_sort_params,
+                                           image=rimg,
+                                           og_image_size=self.img_size)
             self.logger.debug("Second pass sorting done.")
 
             # rotate back
