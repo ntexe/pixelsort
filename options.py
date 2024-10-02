@@ -159,6 +159,8 @@ class Options(object):
                          help_string=HELP_PRESERVE_RES, show=True)
         self.sm = Option(name="symmetry", short="sm", option_type=0,
                          help_string=HELP_SYMMETRY, show=True)
+        self.de = Option(name="decompose", short="de", option_type=0,
+                         help_string=HELP_DECOMPOSE, show=True)
 
         self.sl = Option(name="silent", short="sl", option_type=0,
                          help_string=HELP_SILENT)
