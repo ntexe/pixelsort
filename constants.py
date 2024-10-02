@@ -41,6 +41,6 @@ HELP_AMOUNT = f"Amount of images. Value should be a natural value. If input is a
 HELP_SECOND_PASS = "Second pass flag."
 HELP_REVERSE = "Reverse sort flag."
 HELP_PRESERVE_RES = "Preserve resolution."
-HELP_SYMMETRY = "Make row sort symmetrical."
+HELP_SYMMETRY = "Make sort symmetrical."
 HELP_SILENT = "Make app silent in command line."
 HELP_NOLOG = "Disable logging."
