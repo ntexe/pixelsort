@@ -42,5 +42,7 @@ HELP_SECOND_PASS = "Second pass flag."
 HELP_REVERSE = "Reverse sort flag."
 HELP_PRESERVE_RES = "Preserve resolution."
 HELP_SYMMETRY = "Make sort symmetrical."
+HELP_DECOMPOSE = "Decompose image to R, G and B channels and sort each separately"
+
 HELP_SILENT = "Make app silent in command line."
 HELP_NOLOG = "Disable logging."
