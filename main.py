@@ -332,7 +332,8 @@ class PixelSort:
             imgs[0].save(file_path, quality=95)
 
         else: # save to multi frame file
-            imgs[0].save(file_path, quality=95, save_all=True, append_images=imgs[1:], loop=0)
+            imgs[0].save(file_path, quality=95, save_all=True,
+                         append_images=imgs[1:], loop=0)
 
         self.logger.info("Saved.")
 
@@ -366,8 +367,9 @@ class PixelSort:
             if option.name == "amount" and self.get_out_ext() == ".gif":
                 option.show = True
             if option.show and option.value != option.default:
-                if option.isvariable and self.get_out_ext() != ".gif" and option.name != "mask":
-                    filename += f"_{option.short}{getattr(sort_params, option.short)}"
+                if option.isvariable and self.get_out_ext() != ".gif":
+                    filename += f"_{option.short}" + \
+                                str(getattr(sort_params, option.short))
                 elif option.val_type == bool or option.name == "mask":
                     filename += f"_{option.short}"
                 else:
@@ -395,7 +397,11 @@ class PixelSort:
 
         if input_path.is_dir():
             # return all images with supported extension in dir
-            return list([input_path / filename for filename in os.listdir(input_path) if Path(filename).suffix in self.supported_exts])
+            return list([
+                        input_path / filename
+                        for filename in os.listdir(input_path)
+                        if Path(filename).suffix in self.supported_exts
+            ])
 
         if input_path.is_file():
             # return input path
