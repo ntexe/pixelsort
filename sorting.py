@@ -146,6 +146,7 @@ class SortingEngine:
         self.edge_image_data = list(self.image.filter(ImageFilter.FIND_EDGES).getdata())
 
         t = self.sort_params.t
+        of = self.sort_params.of
 
         for y in range(self.image_size[1]):
             rstart, rend, start, end = self.calc_bounds(y)
@@ -155,7 +156,7 @@ class SortingEngine:
 
             segment_begin = 0
             for x in range(len(row)):
-                if pixel_utils.lightness(edge_row[x]) > t*255:
+                if pixel_utils.lightness(edge_row[min(x-of, len(row)-1)]) > t*255 or x==len(row)-1:
                     if x - segment_begin > 1:
                         row[segment_begin:x] = self.make_symmetrical(sorted(row[segment_begin:x], key=self.skey, reverse=self.re))
 

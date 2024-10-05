@@ -7,10 +7,11 @@ SEGMENTATION_CHOICES = ["none", "row", "edge", "melting", "chunky", "blocky"]
 SKEY_CHOICES = ["hue", "lightness", "saturation", "min_value", "max_value", "red", "green", "blue"]
 
 OPTION_DEFAULTS = {
-    "output": "pixelsorted", "mask": "", "loglevel": "INFO", "segmentation": "edge",
-    "skey_choice": "lightness", "ext": "same", "threshold": 0.1, "angle": 0,
-    "sangle": 90, "size": 0.05, "randomness": 0, "length": 10, "scale": 1,
-    "width": 0, "height": 0, "amount": 1
+    "output": "pixelsorted", "mask": "", "loglevel": "INFO",
+    "segmentation": "edge", "skey_choice": "lightness", "ext": "same",
+    "threshold": 0.1, "offset": 0, "angle": 0, "sangle": 90,
+    "size": 0.05, "randomness": 0, "length": 10, "scale": 1, "width": 0,
+    "height": 0, "amount": 1
 }
 
 HELP_DESCRIPTION = "PixelSort is a python tool for sorting pixels in images."
@@ -26,6 +27,7 @@ HELP_SEGMENTATION = f"Segmentation. Available choices: {', '.join(SEGMENTATION_C
 HELP_SKEY = f"Sorting key. Available choices: {', '.join(SKEY_CHOICES)}. Default is {OPTION_DEFAULTS['skey_choice']}."
 
 HELP_THRESHOLD = f"Threshold for edge detection. Value should be between 0 and 1. Default is {OPTION_DEFAULTS['threshold']}."
+HELP_OFFSET = f"Offset for \"edge\" segmentation. Value should be an integer. Default is {OPTION_DEFAULTS['offset']}."
 HELP_ANGLE = f"Angle to rotate the image before sorting in degrees. Value should be between 0 and 360. Default is {OPTION_DEFAULTS['angle']}."
 HELP_SANGLE = f"Angle for second pass. Value should be between 0 and 360. Default is {OPTION_DEFAULTS['sangle']}."
 HELP_SIZE = f"Size of \"melting\" or \"blocky\" segmentation. Value should be between 0.001 and 1. Default is {OPTION_DEFAULTS['size']}."

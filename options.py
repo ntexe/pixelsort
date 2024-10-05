@@ -121,6 +121,10 @@ class Options(object):
         self.t =  Option(name="threshold", short="t", option_type=1,
                          default=OPTION_DEFAULTS["threshold"], help_string=HELP_THRESHOLD,
                          bounds=(0,1), val_type=float, isvariable=True, show=True)
+        self.of = Option(name="offset", short="of", option_type=1,
+                         default=OPTION_DEFAULTS["offset"],
+                         help_string=HELP_OFFSET, val_type=int,
+                         isvariable=True, show=True)
         self.a =  Option(name="angle", short="a", option_type=1,
                          default=OPTION_DEFAULTS["angle"], help_string=HELP_ANGLE,
                          bounds=(0,360), val_type=int, isvariable=True, show=True)
