@@ -92,7 +92,11 @@ class PixelSort:
 
         os.makedirs(LOG_FOLDER, exist_ok=True)
 
-        self.file_handler = logging.handlers.RotatingFileHandler(f"{LOG_FOLDER}/{LOG_FORMAT}", maxBytes=100000, backupCount=3, delay=True)
+        self.file_handler = logging.handlers.RotatingFileHandler(
+                                f"{LOG_FOLDER}/{LOG_FORMAT}",
+                                maxBytes=100000, backupCount=3,
+                                delay=True
+                            )
         self.stream_handler = logging.StreamHandler()
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -112,29 +116,22 @@ class PixelSort:
             if option.name == "input_path":
                 continue
 
-            if option.name == "ext":
-                arg_parser.add_argument(f"-{option.short}", f"--{option.name.replace('_', '-')}",
-                                        default=option.default, 
-                                        choices=self.supported_exts+["same"],
-                                        help=option.help_string,
-                                        metavar="", dest=option.short, type=option.val_type)
-            elif option.option_type == 0:
-                arg_parser.add_argument(f"--{option.short}", f"--{option.name.replace('_', '-')}",
-                                        action="store_true", help=option.help_string,
-                                        dest=option.short)
+            if option.option_type == 0:
+                arg_parser.add_argument(f"--{option.short}",
+                    f"--{option.name.replace('_', '-')}",
+                    action="store_true", help=option.help_string,
+                    dest=option.short)
 
             elif option.option_type == 1:
-                if option.isvariable:
-                    arg_parser.add_argument(f"-{option.short}", f"--{option.name.replace('_', '-')}",
-                                            default=option.default, 
-                                            choices=option.choices, help=option.help_string,
-                                            metavar="", dest=option.short)
-                else:
-                    arg_parser.add_argument(f"-{option.short}", f"--{option.name.replace('_', '-')}",
-                                            default=option.default, 
-                                            choices=option.choices, help=option.help_string,
-                                            metavar="", dest=option.short, type=option.val_type)
-
+                arg_parser.add_argument(f"-{option.short}",
+                    f"--{option.name.replace('_', '-')}",
+                    choices=(
+                        option.choices if option.name != "ext"
+                        else self.supported_exts+["same"]
+                    ),
+                    type=str if option.isvariable else option.val_type,
+                    help=option.help_string, metavar="",
+                    dest=option.short, default=option.default)
 
         args = arg_parser.parse_args()
 

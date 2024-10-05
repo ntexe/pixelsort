@@ -63,7 +63,6 @@ class SortingEngine:
         self.og_image_size = og_image_size
 
         self.image_data = list(self.image.getdata())
-        self.og_image_data = self.image_data.copy()
         self.image_size = self.image.size
 
         self.sin_alpha = math.sin(math.radians(self.sort_params.a%90))
@@ -81,24 +80,25 @@ class SortingEngine:
         self.sm = self.options.sm.value
 
         if self.options.de.value:
-            # decompose
+            og_image_data = self.image_data.copy()
+
             # red
-            self.image_data = [(i[0], 0, 0) for i in self.og_image_data]
+            self.image_data = [(i[0], 0, 0) for i in og_image_data]
             getattr(self, self.options.sg.value+"_sort")()
-            self.image_data = [(self.image_data[i][0], self.og_image_data[i][1], self.og_image_data[i][2]) for i in range(len(self.og_image_data))]
-            self.og_image_data = self.image_data.copy()
+            self.image_data = [(self.image_data[i][0], og_image_data[i][1], og_image_data[i][2]) for i in range(len(og_image_data))]
+            og_image_data = self.image_data.copy()
 
             # green
-            self.image_data = [(0, i[1], 0) for i in self.og_image_data]
+            self.image_data = [(0, i[1], 0) for i in og_image_data]
             getattr(self, self.options.sg.value+"_sort")()
-            self.image_data = [(self.og_image_data[i][0], self.image_data[i][1], self.og_image_data[i][2]) for i in range(len(self.og_image_data))]
-            self.og_image_data = self.image_data.copy()
+            self.image_data = [(og_image_data[i][0], self.image_data[i][1], og_image_data[i][2]) for i in range(len(og_image_data))]
+            og_image_data = self.image_data.copy()
 
             # blue
-            self.image_data = [(0, 0, i[2]) for i in self.og_image_data]
+            self.image_data = [(0, 0, i[2]) for i in og_image_data]
             getattr(self, self.options.sg.value+"_sort")()
-            self.image_data = [(self.og_image_data[i][0], self.og_image_data[i][1], self.image_data[i][2]) for i in range(len(self.og_image_data))]
-            self.og_image_data = self.image_data.copy()
+            self.image_data = [(og_image_data[i][0], og_image_data[i][1], self.image_data[i][2]) for i in range(len(og_image_data))]
+            og_image_data = self.image_data.copy()
         else:
             # execute sort method
             getattr(self, self.options.sg.value+"_sort")()
