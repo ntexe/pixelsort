@@ -43,14 +43,16 @@ class PixelSort:
 
         if self.options.m.value != "":
             self.logger.info(f"Opening mask image...")
-            self.mask_image = Image.open(self.options.m.value)
-            self.mask_image = ImageOps.invert(self.mask_image.convert("L"))
+            self.mask_image = ImageOps.invert(
+                Image.open(self.options.m.value).convert("L")
+            )
 
-        for img_number in range(1, self.img_count+1):
+        for img_number in range(self.img_count):
             start_time = time.monotonic()
 
-            self.img_path = img_filenames[img_number-1]
-            self.logger.info(f"Opening image {img_number}/{self.img_count} {self.img_path.name}...")
+            self.img_path = img_filenames[img_number]
+            self.logger.debug(f"Found {self.img_count} images.")
+            self.logger.info(f"Opening image {self.img_path.name}...")
             img = Image.open(self.img_path)
 
             images = []
@@ -62,7 +64,8 @@ class PixelSort:
                 images.append(img.convert("RGB"))
 
             sort_params = SortParams()
-            if getattr(img, "n_frames", 1) > 1: # set amount to n_frames, if n_frames > 1
+            # set amount to n_frames, if n_frames > 1
+            if getattr(img, "n_frames", 1) > 1:
                 self.options.am.value = img.n_frames
 
             # duplicate references to the same object.
@@ -70,20 +73,23 @@ class PixelSort:
                 images = [images[0] for i in range(self.options.am.value)]
 
             # sort every frame
-            for i in range(1, self.options.am.value+1):
-                self.logger.info(f"Preparing frame {i}/{self.options.am.value}...")
+            for i in range(self.options.am.value):
+                self.logger.info(f"Preparing frame {i+1}/{self.options.am.value}...")
 
-                rimg, sort_params = self.process_image(images[i-1], i)
+                rimg, sort_params = self.process_image(images[i], i)
 
                 if self.get_out_ext() == ".gif":
-                    images[i-1] = rimg.copy() # we will save it later
+                    images[i] = rimg.copy() # we will save it later
                 else:
-                    self.save_file(sort_params, i, [rimg])
+                    self.save_file(sort_params, i+1, [rimg])
 
             if self.get_out_ext() == ".gif":
                 self.save_file(sort_params, 1, images)
 
-            self.logger.info(f"Image {self.img_path.name} done in {time.monotonic()-start_time:.2f} seconds.")
+            elapsed_time = round(time.monotonic()-start_time, 3)
+
+            self.logger.info(
+                f"{self.img_path.name} done in {elapsed_time} seconds.")
 
     def setup_logging(self) -> None:
         """Setup logging."""
@@ -99,19 +105,18 @@ class PixelSort:
                             )
         self.stream_handler = logging.StreamHandler()
 
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
         self.file_handler.setFormatter(formatter)
         self.stream_handler.setFormatter(formatter)
 
         self.logger.addHandler(self.file_handler)
         self.logger.addHandler(self.stream_handler)
 
-    def parse_args(self) -> None:
-        """Parse command line arguments."""
+    def setup_argparser(self):
         arg_parser = ArgumentParser(description=HELP_DESCRIPTION)
-
         arg_parser.add_argument("input_path", help=HELP_INPUT_PATH)
-
         for option in self.options.__dict__.values():
             if option.name == "input_path":
                 continue
@@ -133,6 +138,11 @@ class PixelSort:
                     help=option.help_string, metavar="",
                     dest=option.short, default=option.default)
 
+        return arg_parser
+
+    def parse_args(self) -> None:
+        """Parse command line arguments."""
+        arg_parser = self.setup_argparser()
         args = arg_parser.parse_args()
 
         # apply args to options object
@@ -162,20 +172,34 @@ class PixelSort:
         if self.options.sg.value != "chunky":
             self.options.l.set_to_default()
 
-        if str(self.options.w.value) != "0" or str(self.options.hg.value) != "0":
+        if (str(self.options.w.value) != "0"
+            or str(self.options.hg.value) != "0"):
             self.options.sc.set_to_default()
 
-        for option in self.options.__dict__.values():
-            # parse keyframes or validate
-            if option.isvariable and not option.parse_keyframes():
-                self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
-
-            elif not option.isvariable and not option.check_value(option.value):
-                option.set_to_default()
-                self.logger.warning(f"{option.name.capitalize()} value is invalid, will use default.")
+        self.process_options()
 
         self.logger.debug("Arg parsing done.")
+        self.log_options_values()
 
+    def process_options(self) -> None:
+        """Process options."""
+        for option in self.options.__dict__.values():
+            # parse keyframes or validate
+            if option.isvariable:
+                if not option.parse_keyframes():
+                    self.warn_invalid(option)
+            else:
+                if not option.check_value(option.value):
+                    option.set_to_default()
+                    self.warn_invalid(option)
+
+    def warn_invalid(self, option) -> None:
+        """Warn user about invalid value."""
+        cap = option.name.capitalize()
+        self.logger.warning(f"{cap} value is invalid, will use default.")
+
+    def log_options_values(self) -> None:
+        """Log options' values on DEBUG level."""
         for option in self.options.__dict__.values():
             self.logger.debug(f"{option.name} = {option.value}")
 
@@ -206,7 +230,8 @@ class PixelSort:
             return (new_width, new_height)
 
         if sort_params.sc != 1: # if scale is not one
-            new_width, new_height = round(self.img_size[0]*sort_params.sc), round(self.img_size[1]*sort_params.sc)
+            new_width  = round(self.img_size[0]*sort_params.sc)
+            new_height = round(self.img_size[1]*sort_params.sc)
 
         return (new_width, new_height)
 
