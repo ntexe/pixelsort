@@ -23,7 +23,7 @@ class SortingEngine:
     def make_symmetrical(self, array):
         """Make symmetrical if self.sm==True"""
         if self.sm:
-            return [array[i*2 if i<len(array)//2 else -(i-(len(array)//2))*2-1] for i in range(len(array))]
+            return array[::2] + array[::-2]
         return array
 
     def calc_bounds(self, y: int) -> tuple:
