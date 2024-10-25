@@ -84,7 +84,7 @@ class Option(object):
         :returns: Calculated value
         """
 
-        ratio = (vals[0]-1)/max(1, vals[1]-1)
+        ratio = vals[0]/max(1, vals[1]-1)
 
         return round(self.keyframes[0]*(1-ratio) + self.keyframes[1]*ratio, 3 if self.val_type == float else None)
 
